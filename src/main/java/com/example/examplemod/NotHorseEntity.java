@@ -1,6 +1,10 @@
 package com.example.examplemod;
 
 import com.google.common.collect.ImmutableList;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.network.syncher.EntityDataAccessor;
+import net.minecraft.network.syncher.EntityDataSerializers;
+import net.minecraft.network.syncher.SynchedEntityData;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
@@ -17,11 +21,20 @@ import net.minecraft.world.level.Level;
 
 public class NotHorseEntity extends LivingEntity {
     public static final String ID = "not_horse";
+    private static final EntityDataAccessor<Integer> DATA_ID_TYPE_VARIANT = SynchedEntityData.defineId(
+            NotHorseEntity.class,
+            EntityDataSerializers.INT
+    );
 
     protected NotHorseEntity(
             Level p_20967_
     ) {
         super(EntitiesInit.VISITOR.get(), p_20967_);
+    }
+
+    protected void defineSynchedData() {
+        super.defineSynchedData();
+        this.entityData.define(DATA_ID_TYPE_VARIANT, 0);
     }
 
     public static AttributeSupplier setAttributes() {
@@ -31,8 +44,21 @@ public class NotHorseEntity extends LivingEntity {
     }
 
     public Object getVariant() {
-        // TODO: Get from NBT
-        return Variant.DARKBROWN;
+        return Variant.byId(this.getTypeVariant() & 255);
+    }
+
+    private int getTypeVariant() {
+        return this.entityData.get(DATA_ID_TYPE_VARIANT);
+    }
+
+    @Override
+    public void readAdditionalSaveData(CompoundTag p_21096_) {
+        super.readAdditionalSaveData(p_21096_);
+        this.setTypeVariant(p_21096_.getInt("Variant"));
+    }
+
+    private void setTypeVariant(int p_30737_) {
+        this.entityData.set(DATA_ID_TYPE_VARIANT, p_30737_);
     }
 
     @Override
