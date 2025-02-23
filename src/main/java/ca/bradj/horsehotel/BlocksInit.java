@@ -1,4 +1,4 @@
-package com.example.examplemod;
+package ca.bradj.horsehotel;
 
 import net.minecraft.world.level.block.Block;
 import net.minecraftforge.registries.DeferredRegister;
@@ -9,7 +9,7 @@ public class BlocksInit {
 
     public static final DeferredRegister<Block> BLOCKS = DeferredRegister.create(
             ForgeRegistries.BLOCKS,
-            ExampleMod.MODID
+            HorseHotel.MODID
     );
 
     public static final RegistryObject<Block> REGISTER_BLOCK = BLOCKS.register(

@@ -1,4 +1,4 @@
-package com.example.examplemod;
+package ca.bradj.horsehotel;
 
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
@@ -60,7 +60,7 @@ public class HHNBT {
     }
 
     private static @NotNull String buildKey(Key key) {
-        return "horsehotel_" + key.value;
+        return HorseHotel.MODID + "_" + key.value;
     }
 
     private static ListTag getOrDefault(

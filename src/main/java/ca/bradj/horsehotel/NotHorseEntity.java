@@ -1,4 +1,4 @@
-package com.example.examplemod;
+package ca.bradj.horsehotel;
 
 import com.google.common.collect.ImmutableList;
 import net.minecraft.core.BlockPos;
