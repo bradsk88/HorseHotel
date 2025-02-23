@@ -4,13 +4,19 @@ import com.google.common.collect.ImmutableList;
 import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
+import net.minecraft.network.chat.Component;
 import net.minecraft.network.syncher.EntityDataAccessor;
 import net.minecraft.network.syncher.EntityDataSerializers;
 import net.minecraft.network.syncher.SynchedEntityData;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.sounds.SoundEvents;
+import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
+import net.minecraft.world.damagesource.DamageSource;
+import net.minecraft.world.effect.MobEffectInstance;
+import net.minecraft.world.effect.MobEffects;
 import net.minecraft.world.entity.*;
 import net.minecraft.world.entity.ai.attributes.AttributeSupplier;
 import net.minecraft.world.entity.animal.horse.Horse;
@@ -171,5 +177,32 @@ public class NotHorseEntity extends LivingEntity {
     @SuppressWarnings("DataFlowIssue")
     private static @NotNull Horse buildNewHorse(ServerLevel sl) {
         return EntityType.HORSE.create(sl);
+    }
+
+    @Override
+    public boolean hurt(
+            DamageSource p_21016_,
+            float p_21017_
+    ) {
+        Entity hurter = p_21016_.getEntity();
+        if (hurter instanceof ServerPlayer sp) {
+            handleHorseAbuse(sp);
+        }
+        return false;
+    }
+
+    @Override
+    public boolean isInvulnerable() {
+        return true;
+    }
+
+    private void handleHorseAbuse(ServerPlayer sp) {
+        sp.sendSystemMessage(Component.literal("DON'T DO THAT!")); // TODO: Translate
+        sp.addEffect(new MobEffectInstance(MobEffects.BLINDNESS, 300));
+        sp.hurt(DamageSource.ANVIL, 1f);
+        sp.getLevel().playSound(null, getOnPos(), SoundEvents.ANVIL_HIT, SoundSource.BLOCKS, 1, 1);
+        for (int i = 0; i < 15; i++) { // There's probably a better way to do a "big push", but oh well.
+            sp.push(this);
+        }
     }
 }
