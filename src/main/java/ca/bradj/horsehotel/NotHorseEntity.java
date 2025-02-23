@@ -23,6 +23,7 @@ import net.minecraft.world.entity.animal.horse.Horse;
 import net.minecraft.world.entity.animal.horse.Variant;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.Items;
 import net.minecraft.world.level.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -100,6 +101,17 @@ public class NotHorseEntity extends LivingEntity {
             Player player,
             InteractionHand p_19979_
     ) {
+        if (Items.STRUCTURE_BLOCK.getDefaultInstance().sameItem(player.getItemInHand(p_19979_))) {
+            HHNBT pd = HHNBT.getPersistentData(this);
+            int index = -1;
+            if (pd.contains(HHNBT.Key.REGISTERED_HORSE_INDEX) && !player.isCrouching()) {
+                index = pd.getInt(HHNBT.Key.REGISTERED_HORSE_INDEX);
+            }
+            pd.put(HHNBT.Key.REGISTERED_HORSE_INDEX, index +1);
+            LOGGER.debug("Data is now: {}", pd);
+            return InteractionResult.CONSUME;
+        }
+
         trySpawnRealHorse(player, p_19979_);
         return InteractionResult.CONSUME;
     }
@@ -117,12 +129,12 @@ public class NotHorseEntity extends LivingEntity {
         }
 
         HHNBT pd = HHNBT.getPersistentData(this);
-        if (!pd.contains(HHNBT.Key.REAL_HORSE_UUID)) {
-            LOGGER.error("Fake horse has no real-horse UUID");
+        if (!pd.contains(HHNBT.Key.REGISTERED_HORSE_INDEX)) {
+            LOGGER.error("Fake horse has no real-horse UUID in data {}", pd);
             return;
         }
 
-        UUID uuid = pd.getUUID(HHNBT.Key.REAL_HORSE_UUID);
+        int uuid = pd.getInt(HHNBT.Key.REGISTERED_HORSE_INDEX);
 
         @Nullable Horse spawned = respawnRealHorse(uuid, getOnPos(), sp, sp.getLevel());
 
@@ -134,7 +146,10 @@ public class NotHorseEntity extends LivingEntity {
         }
     }
 
-    private static void deRegisterHorse(ServerPlayer sp, UUID spawnedHorse) {
+    private static void deRegisterHorse(
+            ServerPlayer sp,
+            UUID spawnedHorse
+    ) {
         HHNBT pd = HHNBT.getPersistentData(sp);
         ListTag list = pd.getList(HHNBT.Key.REGISTERED_HORSES);
         list.removeIf(
@@ -149,7 +164,7 @@ public class NotHorseEntity extends LivingEntity {
 
 
     public static @Nullable Horse respawnRealHorse(
-            UUID horseUUID,
+            int horseIndex,
             BlockPos spawnPos,
             Player player,
             ServerLevel sl
@@ -158,16 +173,16 @@ public class NotHorseEntity extends LivingEntity {
         Horse newone;
         if (pd.contains(HHNBT.Key.REGISTERED_HORSES)) {
             ListTag l = pd.getList(HHNBT.Key.REGISTERED_HORSES);
-            for (int i = 0; i < l.size(); i++) {
-                newone = buildNewHorse(sl);
-                newone.deserializeNBT((CompoundTag) l.get(i));
-                newone.setPos(spawnPos.getX(), spawnPos.getY() + 1, spawnPos.getZ());
-                if (newone.getUUID().equals(horseUUID)) {
-                    l.remove(i);
-                    sl.addFreshEntity(newone);
-                    return newone;
-                }
+            if (l.size() < horseIndex + 1) {
+                LOGGER.debug("Index {} is greater than registry size {}", horseIndex, l.size());
+                return null;
             }
+            newone = buildNewHorse(sl);
+            newone.deserializeNBT((CompoundTag) l.get(horseIndex));
+            newone.setPos(spawnPos.getX(), spawnPos.getY() + 1, spawnPos.getZ());
+            l.remove(horseIndex);
+            sl.addFreshEntity(newone);
+            return newone;
         } else {
             LOGGER.debug("No data");
         }
@@ -188,12 +203,13 @@ public class NotHorseEntity extends LivingEntity {
         if (hurter instanceof ServerPlayer sp) {
             handleHorseAbuse(sp);
         }
+        this.heal(getMaxHealth());
         return false;
     }
 
     @Override
     public boolean isInvulnerable() {
-        return true;
+        return false;
     }
 
     private void handleHorseAbuse(ServerPlayer sp) {

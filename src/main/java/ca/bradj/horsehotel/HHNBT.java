@@ -115,13 +115,31 @@ public class HHNBT {
         delegate.get().remove(buildKey(key));
     }
 
+    public int getInt(Key key) {
+        return delegate.get().getInt(buildKey(key));
+    }
+
+    public void put(
+            Key key,
+            int i
+    ) {
+        delegate.get().putInt(buildKey(key), i);
+    }
+
     public enum Key {
-        REGISTERED_HORSES("registered_horses"), REAL_HORSE_UUID("real_horse_uuid");
+        REGISTERED_HORSES("registered_horses"),
+        REAL_HORSE_UUID("real_horse_uuid"),
+        REGISTERED_HORSE_INDEX("registered_horse_index");
 
         private final String value;
 
         Key(String value) {
             this.value = value;
         }
+    }
+
+    @Override
+    public String toString() {
+        return delegate.get().toString();
     }
 }
