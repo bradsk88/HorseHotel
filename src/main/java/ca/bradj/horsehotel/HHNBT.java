@@ -1,9 +1,11 @@
 package ca.bradj.horsehotel;
 
+import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
 import net.minecraft.nbt.Tag;
 import net.minecraft.world.entity.Entity;
+import net.minecraft.world.level.block.entity.BlockEntity;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.jetbrains.annotations.NotNull;
@@ -78,6 +80,10 @@ public class HHNBT {
         return new HHNBT(player::getPersistentData);
     }
 
+    public static HHNBT getPersistentData(BlockEntity player) {
+        return new HHNBT(player::getPersistentData);
+    }
+
     public UUID getUUID(Key key) {
         return getUUID(delegate.get(), key);
     }
@@ -126,10 +132,32 @@ public class HHNBT {
         delegate.get().putInt(buildKey(key), i);
     }
 
+    public void put(
+            Key key,
+            BlockPos above
+    ) {
+        CompoundTag t = new CompoundTag();
+        t.putInt("x", above.getX());
+        t.putInt("y", above.getY());
+        t.putInt("z", above.getZ());
+        delegate.get().put(buildKey(key), t);
+    }
+
+    public BlockPos getBlockPos(Key key) {
+        CompoundTag d = delegate.get();
+        CompoundTag c = d.getCompound(buildKey(key));
+        return new BlockPos(
+                c.getInt("x"),
+                c.getInt("y"),
+                c.getInt("z")
+        );
+    }
+
     public enum Key {
         REGISTERED_HORSES("registered_horses"),
         REAL_HORSE_UUID("real_horse_uuid"),
-        REGISTERED_HORSE_INDEX("registered_horse_index");
+        REGISTERED_HORSE_INDEX("registered_horse_index"),
+        ANCHOR_POS("anchor_pos");
 
         private final String value;
 

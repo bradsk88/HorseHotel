@@ -15,4 +15,7 @@ public class BlocksInit {
     public static final RegistryObject<Block> REGISTER_BLOCK = BLOCKS.register(
             RegisterBlock.ID, RegisterBlock::new
     );
+    public static final RegistryObject<Block> FAKE_HORSE_SPAWN_BLOCK = BLOCKS.register(
+            FakeHorseSpawnBlock.ID, FakeHorseSpawnBlock::new
+    );
 }

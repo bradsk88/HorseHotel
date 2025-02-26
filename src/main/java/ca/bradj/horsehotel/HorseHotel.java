@@ -76,7 +76,7 @@ public class HorseHotel {
         @SubscribeEvent
         public static void onClientSetup(FMLClientSetupEvent event) {
             event.enqueueWork(() -> EntityRenderers.register(
-                    EntitiesInit.VISITOR.get(),
+                    EntitiesInit.FAKE_HORSE.get(),
                     NotHorseEntityRenderer::new
             ));
         }

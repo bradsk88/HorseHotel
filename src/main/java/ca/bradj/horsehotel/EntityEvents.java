@@ -10,7 +10,7 @@ public class EntityEvents {
     @SubscribeEvent
     public static void entityAttrEvent(EntityAttributeCreationEvent event) {
         event.put(
-                EntitiesInit.VISITOR.get(),
+                EntitiesInit.FAKE_HORSE.get(),
                 NotHorseEntity.setAttributes()
         );
     }

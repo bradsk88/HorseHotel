@@ -13,7 +13,7 @@ public class EntitiesInit {
             ForgeRegistries.ENTITY_TYPES, HorseHotel.MODID
     );
 
-    public static final RegistryObject<EntityType<NotHorseEntity>> VISITOR = TILES.register(
+    public static final RegistryObject<EntityType<NotHorseEntity>> FAKE_HORSE = TILES.register(
             NotHorseEntity.ID,
             () -> EntityType.Builder.of(
                                     (EntityType<NotHorseEntity> a, Level b) -> new NotHorseEntity(b),

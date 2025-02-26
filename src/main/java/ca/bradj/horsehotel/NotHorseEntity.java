@@ -4,6 +4,7 @@ import com.google.common.collect.ImmutableList;
 import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
+import net.minecraft.nbt.Tag;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.syncher.EntityDataAccessor;
 import net.minecraft.network.syncher.EntityDataSerializers;
@@ -25,6 +26,7 @@ import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.level.Level;
+import net.minecraft.world.phys.Vec3;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.jetbrains.annotations.NotNull;
@@ -39,11 +41,22 @@ public class NotHorseEntity extends LivingEntity {
             NotHorseEntity.class,
             EntityDataSerializers.INT
     );
+    private int tick = 0;
+    private int index;
+    private boolean warned;
 
     protected NotHorseEntity(
             Level p_20967_
     ) {
-        super(EntitiesInit.VISITOR.get(), p_20967_);
+        this(p_20967_, -1);
+    }
+
+    public NotHorseEntity(
+            Level level,
+            int index
+    ) {
+        super(EntitiesInit.FAKE_HORSE.get(), level);
+        this.index = index;
     }
 
     protected void defineSynchedData() {
@@ -102,13 +115,7 @@ public class NotHorseEntity extends LivingEntity {
             InteractionHand p_19979_
     ) {
         if (Items.STRUCTURE_BLOCK.getDefaultInstance().sameItem(player.getItemInHand(p_19979_))) {
-            HHNBT pd = HHNBT.getPersistentData(this);
-            int index = -1;
-            if (pd.contains(HHNBT.Key.REGISTERED_HORSE_INDEX) && !player.isCrouching()) {
-                index = pd.getInt(HHNBT.Key.REGISTERED_HORSE_INDEX);
-            }
-            pd.put(HHNBT.Key.REGISTERED_HORSE_INDEX, index +1);
-            LOGGER.debug("Data is now: {}", pd);
+            LOGGER.debug("Data is: {}", HHNBT.getPersistentData(this));
             return InteractionResult.CONSUME;
         }
 
@@ -130,16 +137,17 @@ public class NotHorseEntity extends LivingEntity {
 
         HHNBT pd = HHNBT.getPersistentData(this);
         if (!pd.contains(HHNBT.Key.REGISTERED_HORSE_INDEX)) {
-            LOGGER.error("Fake horse has no real-horse UUID in data {}", pd);
+            LOGGER.error("Fake horse has no real-horse index in data {}", pd);
             return;
         }
 
         int uuid = pd.getInt(HHNBT.Key.REGISTERED_HORSE_INDEX);
 
+        LOGGER.debug("Horse index: {}", uuid);
+
         @Nullable Horse spawned = respawnRealHorse(uuid, getOnPos(), sp, sp.getLevel());
 
         if (spawned != null) {
-            this.remove(RemovalReason.DISCARDED);
             deRegisterHorse(sp, spawned.getUUID());
             sp.getLevel().addFreshEntity(spawned);
             sp.startRiding(spawned);
@@ -184,7 +192,7 @@ public class NotHorseEntity extends LivingEntity {
             sl.addFreshEntity(newone);
             return newone;
         } else {
-            LOGGER.debug("No data");
+            LOGGER.debug("No data on player");
         }
         return null;
     }
@@ -220,5 +228,77 @@ public class NotHorseEntity extends LivingEntity {
         for (int i = 0; i < 15; i++) { // There's probably a better way to do a "big push", but oh well.
             sp.push(this);
         }
+    }
+
+    @Override
+    public void tick() {
+        super.tick();
+        if (!(level instanceof ServerLevel sl)) {
+            return;
+        }
+
+        if (tick++ < 100) {
+            return;
+        }
+
+        tick = 0;
+
+        Player p = level.getNearestPlayer(this, 16);
+        if (p == null) {
+            return;
+        }
+
+        updateIndex();
+        HHNBT hpd = HHNBT.getPersistentData(this);
+        BlockPos blockPos;
+        if (hpd.contains(HHNBT.Key.ANCHOR_POS)) {
+            blockPos = hpd.getBlockPos(HHNBT.Key.ANCHOR_POS);
+        } else {
+            blockPos = getOnPos().above();
+            hpd.put(HHNBT.Key.ANCHOR_POS, blockPos);
+        }
+
+        LOGGER.debug("Horse at {} was moved to {}", index, blockPos);
+        setPos(Vec3.atBottomCenterOf(blockPos));
+
+        if (index >= 0) {
+            HHNBT pd = HHNBT.getPersistentData(p);
+            ListTag pRegHorses = pd.getList(HHNBT.Key.REGISTERED_HORSES);
+            if (index > pRegHorses.size() - 1) {
+                setInvisible(true);
+                return;
+            }
+            setInvisible(false);
+            Tag horse = pRegHorses.get(index);
+            BlockPos pos = getOnPos();
+            assumeFromTag((CompoundTag) horse);
+            setPos(Vec3.atBottomCenterOf(pos.above()));
+        }
+    }
+
+    private void updateIndex() {
+        HHNBT pd = HHNBT.getPersistentData(this);
+        if (pd.contains(HHNBT.Key.REGISTERED_HORSE_INDEX)) {
+            if (index >= 0) {
+                return;
+            }
+            index = pd.getInt(HHNBT.Key.REGISTERED_HORSE_INDEX);
+            return;
+        }
+        if (index >= 0) {
+            pd.put(HHNBT.Key.REGISTERED_HORSE_INDEX, index);
+            return;
+        }
+        if (!this.warned) {
+            LOGGER.warn("Horse had no data but also no index. This is probably a bug.");
+            this.warned = true;
+        }
+    }
+
+    public void assumeFromTag(CompoundTag tag) {
+        this.deserializeNBT(tag);
+        HHNBT pd = HHNBT.getPersistentData(this);
+        pd.put(HHNBT.Key.REAL_HORSE_UUID, this.getUUID());
+        this.setUUID(UUID.randomUUID());
     }
 }

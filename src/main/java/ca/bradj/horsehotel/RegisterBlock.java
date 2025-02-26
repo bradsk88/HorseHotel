@@ -123,16 +123,13 @@ public class RegisterBlock extends Block implements EntityBlock {
             CompoundTag tag
     ) {
         NotHorseEntity newone = buildEmptyFakeHorse(sl);
-        newone.deserializeNBT(tag);
-        HHNBT pd = HHNBT.getPersistentData(newone);
-        pd.put(HHNBT.Key.REAL_HORSE_UUID, newone.getUUID());
-        newone.setUUID(UUID.randomUUID());
+        newone.assumeFromTag(tag);
         return newone;
     }
 
     @SuppressWarnings("DataFlowIssue")
     private static @NotNull NotHorseEntity buildEmptyFakeHorse(ServerLevel sl) {
-        return EntitiesInit.VISITOR.get().create(sl);
+        return EntitiesInit.FAKE_HORSE.get().create(sl);
     }
 
 

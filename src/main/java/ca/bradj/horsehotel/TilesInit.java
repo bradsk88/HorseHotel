@@ -15,5 +15,10 @@ public class TilesInit {
                     RegisterBlock.Entity::new, BlocksInit.REGISTER_BLOCK.get()
             ).build(null)
     );
+    public static final RegistryObject<BlockEntityType<FakeHorseSpawnBlock.Entity>> SPAWN_BLOCK = TILES.register(
+            FakeHorseSpawnBlock.ID, () -> BlockEntityType.Builder.of(
+                    FakeHorseSpawnBlock.Entity::new, BlocksInit.FAKE_HORSE_SPAWN_BLOCK.get()
+            ).build(null)
+    );
 
 }
