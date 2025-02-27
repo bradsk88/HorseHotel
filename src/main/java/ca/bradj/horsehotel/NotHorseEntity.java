@@ -258,7 +258,6 @@ public class NotHorseEntity extends LivingEntity {
             hpd.put(HHNBT.Key.ANCHOR_POS, blockPos);
         }
 
-        LOGGER.debug("Horse at {} was moved to {}", index, blockPos);
         setPos(Vec3.atBottomCenterOf(blockPos));
 
         if (index >= 0) {

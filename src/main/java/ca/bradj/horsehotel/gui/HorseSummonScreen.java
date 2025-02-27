@@ -1,0 +1,189 @@
+package ca.bradj.horsehotel.gui;
+
+import ca.bradj.horsehotel.compat.Compat;
+import ca.bradj.horsehotel.network.HHNetwork;
+import ca.bradj.horsehotel.network.SummonHorseMessage;
+import ca.bradj.horsehotel.network.UIHorse;
+import com.google.common.collect.ImmutableList;
+import com.mojang.blaze3d.systems.RenderSystem;
+import com.mojang.blaze3d.vertex.PoseStack;
+import com.mojang.math.Vector3f;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.screens.Screen;
+import net.minecraft.client.renderer.MultiBufferSource;
+import net.minecraft.client.renderer.Rect2i;
+import net.minecraft.client.renderer.entity.EntityRenderDispatcher;
+import net.minecraft.network.chat.Component;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.EntityType;
+import net.minecraft.world.entity.animal.horse.Horse;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+import org.lwjgl.glfw.GLFW;
+
+import java.util.Collection;
+import java.util.List;
+import java.util.UUID;
+
+import static ca.bradj.horsehotel.gui.PagedCardScreen.Card;
+
+public class HorseSummonScreen extends Screen {
+    public static final Logger LOGGER = LogManager.getLogger();
+
+    public static final int EXTRA_HEIGHT = 56;
+    private final List<UIHorse> horses;
+    private final PagedCardScreen<UIHorse> delegate;
+    private final ImmutableList<Entity> entities;
+
+    public HorseSummonScreen(
+            Collection<UIHorse> jobs
+    ) {
+        super(Compat.translatable("menu.work_add_confirm.title"));
+
+        this.delegate = new PagedCardScreen<>(
+                () -> height,
+                () -> width,
+                () -> ImmutableList.copyOf(jobs),
+                horse -> {
+                },
+                (s, c, p) -> this.renderCardContent(s, c, new ca.bradj.horsehotel.gui.Coordinate(p.x(), p.y())),
+                1,
+                0,
+                0
+        );
+        this.horses = ImmutableList.copyOf(jobs);
+        ImmutableList.Builder<Entity> entities = ImmutableList.builder();
+        for (int i = 0; i < horses.size(); i++) {
+            Horse element = EntityType.HORSE.create(Minecraft.getInstance().level);
+            element.deserializeNBT(horses.get(i).horseData());
+            element.setUUID(UUID.randomUUID());
+            element.setYBodyRot(40);
+            element.setYHeadRot(40);
+            entities.add(element);
+        }
+        this.entities = entities.build();
+    }
+
+    @Override
+    public boolean keyReleased(
+            int keyCode,
+            int scanCode,
+            int modifiers
+    ) {
+        if (keyCode == GLFW.GLFW_KEY_Q) { // TODO: Get from user's config
+            return true;
+        }
+        return super.keyPressed(keyCode, scanCode, modifiers);
+    }
+
+    @Override
+    protected void init() {
+        super.init();
+        this.delegate.afterInit(this::addRenderableWidget);
+    }
+
+    @Override
+    public void render(
+            PoseStack stack,
+            int mouseX,
+            int mouseY,
+            float partialTicks
+    ) {
+        this.renderBackground(stack);
+        this.delegate.renderBg(stack, partialTicks, mouseX, mouseY);
+        super.render(stack, mouseX, mouseY, partialTicks);
+        this.delegate.afterRender(stack, font, mouseX, mouseY, partialTicks, horses, true);
+    }
+
+    @Override
+    public boolean mouseClicked(
+            double x,
+            double y,
+            int p_94697_
+    ) {
+        Coordinate coord = new Coordinate((int) x, (int) y);
+        for (Card<UIHorse> card : delegate.cards()) {
+            if (GuiUtil.isCoordInBox(coord, card.coords().topLeft(), card.coords().bottomRight())) {
+                SummonHorseMessage m = new SummonHorseMessage(card.data().horseIndex());
+                HHNetwork.CHANNEL.sendToServer(m);
+                ClientAccess.closeScreens();
+                return true;
+            }
+        }
+        return super.mouseClicked(x, y, p_94697_);
+    }
+
+
+    @Override
+    public boolean mouseScrolled(
+            double p_94686_,
+            double p_94687_,
+            double p_94688_
+    ) {
+        return this.delegate.mouseScrolled(
+                p_94686_,
+                p_94687_,
+                p_94688_,
+                this::isMouseOver,
+                (coord, tick) -> this.mouseScrolled(coord.x(), coord.y(), tick)
+        );
+    }
+
+    private void renderCardContent(
+            PoseStack stack,
+            PagedCardScreen.Card<UIHorse> card,
+            ca.bradj.horsehotel.gui.Coordinate mouse
+    ) {
+        PagedCardScreen.CardCoordinates c = card.coords();
+        renderEntity(entities.get(card.index()), stack, c.leftXPadded() + 10, c.topYPadded() + 4, 16);
+        Component name = entities.get(card.index()).getCustomName();
+        if (name == null) {
+            name = Compat.translatable("horse");
+        }
+        Compat.drawDarkText(font, stack, name, c.leftXPadded() + 35, c.topYPadded());
+    }
+
+    public static void renderEntity(
+            Entity entity,
+            PoseStack matrixStack,
+            int xPos,
+            int yPos,
+            float scale
+    ) {
+        matrixStack.pushPose();
+        RenderSystem.setShaderColor(1f, 1f, 1f, 1f);
+        matrixStack.translate(xPos + 8, yPos + 24, 50F);
+        matrixStack.scale(-scale, scale, scale);
+        matrixStack.mulPose(Vector3f.ZP.rotationDegrees(180));
+        matrixStack.mulPose(Vector3f.XP.rotationDegrees(0));
+
+        EntityRenderDispatcher dispatcher = Minecraft.getInstance()
+                                                     .getEntityRenderDispatcher();
+        try {
+            MultiBufferSource.BufferSource buffer = Minecraft.getInstance()
+                                                             .renderBuffers()
+                                                             .bufferSource();
+            dispatcher.setRenderShadow(false);
+            dispatcher.render(entity, 0.0D, 0.0D, 0.0D, 0.0F, 1.0F, matrixStack, buffer, 15728880);
+            buffer.endBatch();
+        } catch (Exception e) {
+            LOGGER.error("Error rendering entity!", e);
+        }
+        dispatcher.setRenderShadow(true);
+
+        RenderSystem.setShaderColor(1.0F, 1.0F, 1.0F, 1.0F);
+        RenderSystem.enableDepthTest();
+        Minecraft.getInstance().gameRenderer.lightTexture().turnOffLightLayer();
+        matrixStack.popPose();
+    }
+
+
+    @Override
+    public boolean isPauseScreen() {
+        return false;
+    }
+
+    public List<Rect2i> getExtraAreas() {
+        return this.delegate.getExtraAreas();
+    }
+}

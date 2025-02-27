@@ -42,4 +42,9 @@ public class NotHorseEntityRenderer extends LivingEntityRenderer<NotHorseEntity,
     public ResourceLocation getTextureLocation(NotHorseEntity entity) {
         return (ResourceLocation) LOCATION_BY_VARIANT.get(((NotHorseEntity) entity).getVariant());
     }
+
+    @Override
+    protected boolean shouldShowName(NotHorseEntity p_115333_) {
+        return p_115333_.hasCustomName();
+    }
 }

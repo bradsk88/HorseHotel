@@ -1,5 +1,6 @@
 package ca.bradj.horsehotel;
 
+import ca.bradj.horsehotel.network.HHNetwork;
 import com.mojang.logging.LogUtils;
 import net.minecraft.client.renderer.entity.EntityRenderers;
 import net.minecraft.world.item.Item;
@@ -61,6 +62,8 @@ public class HorseHotel {
         LOGGER.info(Config.magicNumberIntroduction + Config.magicNumber);
 
         Config.items.forEach((item) -> LOGGER.info("ITEM >> {}", item.toString()));
+
+        event.enqueueWork(HHNetwork::init);
     }
 
     // You can use SubscribeEvent and let the Event Bus discover methods to call

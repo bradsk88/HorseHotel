@@ -1,8 +1,10 @@
 package ca.bradj.horsehotel;
 
+import ca.bradj.horsehotel.network.HHNetwork;
+import ca.bradj.horsehotel.network.ShowHorseSummonScreenMessage;
+import ca.bradj.horsehotel.network.UIHorse;
 import com.google.common.collect.ImmutableList;
 import net.minecraft.core.BlockPos;
-import net.minecraft.core.Direction;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
 import net.minecraft.server.level.ServerLevel;
@@ -19,14 +21,11 @@ import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.material.Material;
 import net.minecraft.world.level.material.MaterialColor;
 import net.minecraft.world.phys.BlockHitResult;
-import net.minecraft.world.phys.Vec3;
+import net.minecraftforge.network.PacketDistributor;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-
-import java.util.List;
-import java.util.UUID;
 
 public class RegisterBlock extends Block implements EntityBlock {
 
@@ -69,17 +68,17 @@ public class RegisterBlock extends Block implements EntityBlock {
             return;
         }
 
-        useRegisterBlock(sp.getLevel(), bp, sp);
+        useRegisterBlock(sp);
     }
 
     private static void useRegisterBlock(
-            ServerLevel sl,
-            BlockPos bp,
             ServerPlayer player
     ) {
         net.minecraft.world.entity.Entity veh = player.getVehicle();
         if (veh == null) {
-            spawnFakeHorses(sl, bp, player);
+            ImmutableList<UIHorse> fh = buildFakeHorses(player);
+            ShowHorseSummonScreenMessage msg = new ShowHorseSummonScreenMessage(fh);
+            HHNetwork.CHANNEL.send(PacketDistributor.PLAYER.with(() -> player), msg);
             return;
         }
         if (storeHorseOnPlayer(player, veh)) {
@@ -87,34 +86,19 @@ public class RegisterBlock extends Block implements EntityBlock {
         }
     }
 
-    private static void spawnFakeHorses(
-            ServerLevel sl,
-            BlockPos bp,
-            ServerPlayer player
-    ) {
-        List<NotHorseEntity> lookalikes = buildFakeHorses(player, sl);
-        List<Direction> directions = Direction.Plane.HORIZONTAL.shuffledCopy(sl.random);
-        for (int i = 0; i < lookalikes.size(); i++) {
-            Direction dir = directions.get(i % directions.size());
-            int radius = (Math.max(0, i - 1) / 4) + 1;
-            NotHorseEntity lookalike = lookalikes.get(i);
-            lookalike.setPos(Vec3.atBottomCenterOf(bp.relative(dir, radius)));
-            sl.addFreshEntity(lookalike);
-        }
-    }
-
-    public static ImmutableList<NotHorseEntity> buildFakeHorses(
-            Player player,
-            ServerLevel sl
+    public static ImmutableList<UIHorse> buildFakeHorses(
+            Player player
     ) {
         HHNBT pd = HHNBT.getPersistentData(player);
-        ImmutableList.Builder<NotHorseEntity> b = ImmutableList.builder();
+        ImmutableList.Builder<UIHorse> b = ImmutableList.builder();
         if (!pd.contains(HHNBT.Key.REGISTERED_HORSES)) {
             LOGGER.debug("No data");
             return b.build();
         }
         ListTag l = pd.getList(HHNBT.Key.REGISTERED_HORSES);
-        l.forEach(tag -> b.add(buildFakeFromTag(sl, (CompoundTag) tag)));
+        for (int i = 0; i < l.size(); i++) {
+            b.add(new UIHorse(i, l.getCompound(i)));
+        }
         return b.build();
     }
 
