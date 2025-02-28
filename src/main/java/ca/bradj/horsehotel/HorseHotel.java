@@ -15,11 +15,11 @@ import net.minecraftforge.fml.config.ModConfig;
 import net.minecraftforge.fml.event.lifecycle.FMLClientSetupEvent;
 import net.minecraftforge.fml.event.lifecycle.FMLCommonSetupEvent;
 import net.minecraftforge.fml.javafmlmod.FMLJavaModLoadingContext;
-import net.minecraftforge.registries.DeferredRegister;
 import net.minecraftforge.registries.ForgeRegistries;
 import org.slf4j.Logger;
 
 import static ca.bradj.horsehotel.BlocksInit.BLOCKS;
+import static ca.bradj.horsehotel.ItemsInit.ITEMS;
 
 // The value here should match an entry in the META-INF/mods.toml file
 @Mod(HorseHotel.MODID)
@@ -29,7 +29,8 @@ public class HorseHotel {
     // Directly reference a slf4j logger
     private static final Logger LOGGER = LogUtils.getLogger();
     // Create a Deferred Register to hold Items which will all be registered under the "examplemod" namespace
-    public static final DeferredRegister<Item> ITEMS = DeferredRegister.create(ForgeRegistries.ITEMS, MODID);
+    public static final Item.Properties DEFAULT_ITEM_PROPS = new Item.Properties().
+            tab(ModItemGroup.HORSEHOTEL_GROUP);
 
     public HorseHotel(FMLJavaModLoadingContext context) {
         IEventBus modEventBus = context.getModEventBus();
