@@ -1,0 +1,7 @@
+{
+  "variants": {
+    "": {
+      "model": "horsehotel:block/register_block"
+    }
+  }
+}

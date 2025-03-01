@@ -83,6 +83,10 @@ public class HorseHotel {
                     EntitiesInit.FAKE_HORSE.get(),
                     NotHorseEntityRenderer::new
             ));
+            event.enqueueWork(() -> EntityRenderers.register(
+                    EntitiesInit.STABLE_ATTENDANT.get(),
+                    StableAttendantRenderer::new
+            ));
         }
     }
 }

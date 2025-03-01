@@ -23,4 +23,14 @@ public class EntitiesInit {
                                     .build(ResourceLocation.tryBuild(HorseHotel.MODID, NotHorseEntity.ID).toString())
     );
 
+    public static final RegistryObject<EntityType<StableAttendant>> STABLE_ATTENDANT = TILES.register(
+            StableAttendant.ID,
+            () -> EntityType.Builder.of(
+                                    (EntityType<StableAttendant> a, Level b) -> new StableAttendant(b),
+                                    MobCategory.CREATURE
+                            )
+                                    .sized(0.6f, 1.6f)
+                                    .build(ResourceLocation.tryBuild(HorseHotel.MODID, StableAttendant.ID).toString())
+    );
+
 }

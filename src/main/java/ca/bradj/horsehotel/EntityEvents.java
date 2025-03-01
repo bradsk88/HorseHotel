@@ -13,6 +13,10 @@ public class EntityEvents {
                 EntitiesInit.FAKE_HORSE.get(),
                 NotHorseEntity.setAttributes()
         );
+        event.put(
+                EntitiesInit.STABLE_ATTENDANT.get(),
+                StableAttendant.setAttributes()
+        );
     }
 
 }
