@@ -31,7 +31,7 @@ public class Registration {
             return;
         }
 
-        ShowHorseRegisterScreenMessage msg = new ShowHorseRegisterScreenMessage(veh.getPersistentData());
+        ShowHorseRegisterScreenMessage msg = new ShowHorseRegisterScreenMessage(veh.serializeNBT());
         HHNetwork.CHANNEL.send(PacketDistributor.PLAYER.with(() -> player), msg);
     }
 
