@@ -59,6 +59,8 @@ public class Registration {
             return false;
         }
         CompoundTag data = vh.serializeNBT();
+        HHNBT nhd = new HHNBT(() -> data);
+        nhd.put(HHNBT.Key.ARMOR_ITEM, vh.getArmor().serializeNBT());
         LOGGER.debug("Horse: {}", data);
         HHNBT pd = HHNBT.getPersistentData(player);
         ListTag l = pd.getOrDefault(HHNBT.Key.REGISTERED_HORSES, ListTag::new);

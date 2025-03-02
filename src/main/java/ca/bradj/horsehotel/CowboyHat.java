@@ -50,6 +50,6 @@ public class CowboyHat extends ArmorItem {
             EquipmentSlot slot,
             String type
     ) {
-        return "eurekacraft:textures/models/armor/scub_goggles.png";
+        return "eurekacraft:textures/model/hat.png";
     }
 }

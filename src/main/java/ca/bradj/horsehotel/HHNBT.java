@@ -153,11 +153,23 @@ public class HHNBT {
         );
     }
 
+    public void put(
+            Key key,
+            CompoundTag compoundTag
+    ) {
+        delegate.get().put(buildKey(key), compoundTag);
+    }
+
+    public CompoundTag getCompound(Key key) {
+        return delegate.get().getCompound(buildKey(key));
+    }
+
     public enum Key {
         REGISTERED_HORSES("registered_horses"),
         REAL_HORSE_UUID("real_horse_uuid"),
         REGISTERED_HORSE_INDEX("registered_horse_index"),
-        ANCHOR_POS("anchor_pos");
+        ANCHOR_POS("anchor_pos"),
+        ARMOR_ITEM("armor_item");
 
         private final String value;
 

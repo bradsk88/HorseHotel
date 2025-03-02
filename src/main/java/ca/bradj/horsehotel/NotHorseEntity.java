@@ -21,6 +21,7 @@ import net.minecraft.world.effect.MobEffects;
 import net.minecraft.world.entity.*;
 import net.minecraft.world.entity.ai.attributes.AttributeSupplier;
 import net.minecraft.world.entity.animal.horse.Horse;
+import net.minecraft.world.entity.animal.horse.Markings;
 import net.minecraft.world.entity.animal.horse.Variant;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
@@ -41,6 +42,10 @@ public class NotHorseEntity extends LivingEntity {
             NotHorseEntity.class,
             EntityDataSerializers.INT
     );
+    private static final EntityDataAccessor<ItemStack> ARMOR_ITEM = SynchedEntityData.defineId(
+            NotHorseEntity.class,
+            EntityDataSerializers.ITEM_STACK
+    );
     private int tick = 0;
     private int index;
     private boolean warned;
@@ -59,9 +64,14 @@ public class NotHorseEntity extends LivingEntity {
         this.index = index;
     }
 
+    public Markings getMarkings() {
+        return Markings.byId((this.getTypeVariant() & '\uff00') >> 8);
+    }
+
     protected void defineSynchedData() {
         super.defineSynchedData();
         this.entityData.define(DATA_ID_TYPE_VARIANT, 0);
+        this.entityData.define(ARMOR_ITEM, ItemStack.EMPTY);
     }
 
     public static AttributeSupplier setAttributes() {
@@ -160,13 +170,11 @@ public class NotHorseEntity extends LivingEntity {
     ) {
         HHNBT pd = HHNBT.getPersistentData(sp);
         ListTag list = pd.getList(HHNBT.Key.REGISTERED_HORSES);
-        list.removeIf(
-                tag -> {
-                    @NotNull Horse holder = buildNewHorse(sp.getLevel());
-                    holder.deserializeNBT((CompoundTag) tag);
-                    return holder.getUUID().equals(spawnedHorse);
-                }
-        );
+        list.removeIf(tag -> {
+            @NotNull Horse holder = buildNewHorse(sp.getLevel());
+            holder.deserializeNBT((CompoundTag) tag);
+            return holder.getUUID().equals(spawnedHorse);
+        });
         pd.put(HHNBT.Key.REGISTERED_HORSES, list);
     }
 
@@ -298,6 +306,11 @@ public class NotHorseEntity extends LivingEntity {
         this.deserializeNBT(tag);
         HHNBT pd = HHNBT.getPersistentData(this);
         pd.put(HHNBT.Key.REAL_HORSE_UUID, this.getUUID());
+        entityData.set(ARMOR_ITEM, ItemStack.of(new HHNBT(() -> tag).getCompound(HHNBT.Key.ARMOR_ITEM)));
         this.setUUID(UUID.randomUUID());
+    }
+
+    public ItemStack getArmor() {
+        return entityData.get(ARMOR_ITEM);
     }
 }
