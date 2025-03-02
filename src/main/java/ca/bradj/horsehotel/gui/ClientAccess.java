@@ -1,22 +1,34 @@
 package ca.bradj.horsehotel.gui;
 
-import ca.bradj.horsehotel.network.UIHorse;
+import ca.bradj.horsehotel.network.ClientRunnable;
+import ca.bradj.horsehotel.network.ShowHorseRegisterScreenMessage;
+import ca.bradj.horsehotel.network.ShowHorseSummonScreenMessage;
+import com.google.common.collect.ImmutableMap;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.screens.Screen;
 
-import java.util.Collection;
-import java.util.function.Supplier;
+import java.util.function.Function;
 
 public class ClientAccess {
-    public static boolean openHorseSummonScreen(
-            Collection<UIHorse> horses
-    ) {
-        return openScreen(() -> new HorseSummonScreen(horses));
+
+    private static final ImmutableMap<Class<? extends ClientRunnable>, Function<Object, Screen>> creators;
+
+    static {
+        ImmutableMap.Builder<Class<? extends ClientRunnable>, Function<Object, Screen>> b = ImmutableMap.builder();
+        b.put(
+                ShowHorseSummonScreenMessage.class,
+                (Object msg) -> new HorseSummonScreen(((ShowHorseSummonScreenMessage) msg).horses())
+        );
+        b.put(
+                ShowHorseRegisterScreenMessage.class,
+                (Object msg) -> new HorseRegisterScreen(((ShowHorseRegisterScreenMessage) msg).horseData)
+        );
+        creators = b.build();
     }
 
-    public static boolean openScreen(Supplier<Screen> screen) {
-        Minecraft.getInstance().setScreen(screen.get());
-        return true;
+    @SuppressWarnings({"DataFlowIssue"})
+    public static <X extends ClientRunnable> void openScreenForMessage(X msg) {
+        Minecraft.getInstance().setScreen(creators.get(msg.getClass()).apply(msg));
     }
 
     public static void closeScreens() {

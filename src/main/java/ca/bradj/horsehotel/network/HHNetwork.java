@@ -32,6 +32,12 @@ public class HHNetwork {
                         decoder(SummonHorseMessage::decode),
                 SummonHorseMessage::handle
         ).add();
+        Compat.withConsumer(
+                registerMessage(RegisterRiddenHorseMessage.class, NetworkDirection.PLAY_TO_SERVER).
+                        encoder(RegisterRiddenHorseMessage::encode).
+                        decoder(RegisterRiddenHorseMessage::decode),
+                RegisterRiddenHorseMessage::handle
+        ).add();
     }
 
     private static void initMessagesToClient() {
@@ -40,6 +46,12 @@ public class HHNetwork {
                         encoder(ShowHorseSummonScreenMessage::encode).
                         decoder(ShowHorseSummonScreenMessage::decode),
                 ShowHorseSummonScreenMessage::handle
+        ).add();
+        Compat.withConsumer(
+                registerMessage(ShowHorseRegisterScreenMessage.class, NetworkDirection.PLAY_TO_CLIENT).
+                        encoder(ShowHorseRegisterScreenMessage::encode).
+                        decoder(ShowHorseRegisterScreenMessage::decode),
+                ShowHorseRegisterScreenMessage::handle
         ).add();
     }
 

@@ -1,0 +1,8 @@
+{
+  "horsehotel.menus.common.register":  "Register",
+  "horsehotel.menus.common.close":  "Close",
+  "horsehotel.menus.common.this_horse": "this horse",
+  "horsehotel.menus.register_horse.do_you_want_to_register":  "Do you want to register %s with the Horse Hotels?",
+  "horsehotel.menus.register_horse.your_horse_will_be_kept_in_stable":  "Your horse will be kept here until you take it out.",
+  "horsehotel.menus.register_horse.also_other_stables":  "You will also find your horse at the other Horse Hotels."
+}

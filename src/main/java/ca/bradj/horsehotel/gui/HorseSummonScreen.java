@@ -25,6 +25,7 @@ import java.util.Collection;
 import java.util.List;
 import java.util.UUID;
 
+import static ca.bradj.horsehotel.gui.GuiUtil.renderEntity;
 import static ca.bradj.horsehotel.gui.PagedCardScreen.Card;
 
 public class HorseSummonScreen extends Screen {
@@ -142,41 +143,6 @@ public class HorseSummonScreen extends Screen {
         }
         Compat.drawDarkText(font, stack, name, c.leftXPadded() + 35, c.topYPadded());
     }
-
-    public static void renderEntity(
-            Entity entity,
-            PoseStack matrixStack,
-            int xPos,
-            int yPos,
-            float scale
-    ) {
-        matrixStack.pushPose();
-        RenderSystem.setShaderColor(1f, 1f, 1f, 1f);
-        matrixStack.translate(xPos + 8, yPos + 24, 50F);
-        matrixStack.scale(-scale, scale, scale);
-        matrixStack.mulPose(Vector3f.ZP.rotationDegrees(180));
-        matrixStack.mulPose(Vector3f.XP.rotationDegrees(0));
-
-        EntityRenderDispatcher dispatcher = Minecraft.getInstance()
-                                                     .getEntityRenderDispatcher();
-        try {
-            MultiBufferSource.BufferSource buffer = Minecraft.getInstance()
-                                                             .renderBuffers()
-                                                             .bufferSource();
-            dispatcher.setRenderShadow(false);
-            dispatcher.render(entity, 0.0D, 0.0D, 0.0D, 0.0F, 1.0F, matrixStack, buffer, 15728880);
-            buffer.endBatch();
-        } catch (Exception e) {
-            LOGGER.error("Error rendering entity!", e);
-        }
-        dispatcher.setRenderShadow(true);
-
-        RenderSystem.setShaderColor(1.0F, 1.0F, 1.0F, 1.0F);
-        RenderSystem.enableDepthTest();
-        Minecraft.getInstance().gameRenderer.lightTexture().turnOffLightLayer();
-        matrixStack.popPose();
-    }
-
 
     @Override
     public boolean isPauseScreen() {

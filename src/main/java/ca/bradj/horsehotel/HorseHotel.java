@@ -27,7 +27,7 @@ public class HorseHotel {
     // Define mod id in a common place for everything to reference
     public static final String MODID = "horsehotel";
     // Directly reference a slf4j logger
-    private static final Logger LOGGER = LogUtils.getLogger();
+    public static final Logger LOGGER = LogUtils.getLogger();
     // Create a Deferred Register to hold Items which will all be registered under the "examplemod" namespace
     public static final Item.Properties DEFAULT_ITEM_PROPS = new Item.Properties().
             tab(ModItemGroup.HORSEHOTEL_GROUP);
@@ -52,6 +52,11 @@ public class HorseHotel {
 
         // Register our mod's ForgeConfigSpec so that Forge can create and load the config file for us
         context.registerConfig(ModConfig.Type.COMMON, Config.SPEC);
+    }
+
+    public static void logBug(String s, Object... args) {
+        LOGGER.error(s, args);
+        LOGGER.error("This is a bug. Please report it to https://github.com/bradsk88/horsehotel/issues");
     }
 
     private void commonSetup(final FMLCommonSetupEvent event) {
