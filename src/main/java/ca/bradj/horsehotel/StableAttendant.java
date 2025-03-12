@@ -1,43 +1,72 @@
 package ca.bradj.horsehotel;
 
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.ImmutableSet;
+import com.mojang.serialization.Dynamic;
 import net.minecraft.core.BlockPos;
-import net.minecraft.nbt.CompoundTag;
-import net.minecraft.network.chat.Component;
-import net.minecraft.network.syncher.EntityDataAccessor;
-import net.minecraft.network.syncher.EntityDataSerializers;
-import net.minecraft.network.syncher.SynchedEntityData;
+import net.minecraft.core.GlobalPos;
+import net.minecraft.core.Holder;
+import net.minecraft.network.protocol.game.DebugPackets;
+import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
-import net.minecraft.sounds.SoundEvents;
-import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.damagesource.DamageSource;
-import net.minecraft.world.effect.MobEffectInstance;
-import net.minecraft.world.effect.MobEffects;
-import net.minecraft.world.entity.*;
+import net.minecraft.world.entity.EquipmentSlot;
+import net.minecraft.world.entity.PathfinderMob;
+import net.minecraft.world.entity.ai.Brain;
 import net.minecraft.world.entity.ai.attributes.AttributeSupplier;
-import net.minecraft.world.entity.animal.horse.Variant;
+import net.minecraft.world.entity.ai.memory.MemoryModuleType;
+import net.minecraft.world.entity.ai.navigation.GroundPathNavigation;
+import net.minecraft.world.entity.ai.sensing.Sensor;
+import net.minecraft.world.entity.ai.sensing.SensorType;
+import net.minecraft.world.entity.ai.village.poi.PoiManager;
+import net.minecraft.world.entity.ai.village.poi.PoiType;
+import net.minecraft.world.entity.ai.village.poi.PoiTypes;
 import net.minecraft.world.entity.player.Player;
-import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.entity.schedule.Activity;
+import net.minecraft.world.entity.schedule.Schedule;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.Vec3;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-import java.util.UUID;
+import java.util.Map;
+import java.util.Optional;
+import java.util.function.BiPredicate;
 
-public class StableAttendant extends Mob {
+public class StableAttendant extends PathfinderMob {
     public static final Logger LOGGER = LogManager.getLogger();
     public static final String ID = "stable_attendant";
-    private static final EntityDataAccessor<Integer> DATA_ID_TYPE_VARIANT = SynchedEntityData.defineId(
-            StableAttendant.class,
-            EntityDataSerializers.INT
-    );
     private int tick = 0;
-    private int index;
-    private boolean warned;
+    private static final ImmutableList<MemoryModuleType<?>> MEMORY_TYPES = ImmutableList.of(
+            MemoryModuleType.HOME,
+            MemoryModuleType.WALK_TARGET,
+            MemoryModuleType.LOOK_TARGET,
+            MemoryModuleType.PATH,
+            MemoryModuleType.DOORS_TO_CLOSE,
+            MemoryModuleType.NEAREST_BED,
+            MemoryModuleType.CANT_REACH_WALK_TARGET_SINCE,
+            MemoryModuleType.LAST_SLEPT,
+            MemoryModuleType.LAST_WOKEN,
+            MemoryModuleType.NEAREST_LIVING_ENTITIES,
+            MemoryModuleType.NEAREST_VISIBLE_LIVING_ENTITIES,
+            MemoryModuleType.NEAREST_PLAYERS,
+            MemoryModuleType.NEAREST_VISIBLE_PLAYER,
+            MemoryModuleType.JOB_SITE
+    );
+    private static final ImmutableList<SensorType<? extends Sensor<? super StableAttendant>>> SENSOR_TYPES = ImmutableList.of(
+            SensorType.NEAREST_BED,
+            SensorType.NEAREST_LIVING_ENTITIES,
+            SensorType.NEAREST_PLAYERS,
+            SensorsInit.JOBSITE_FROM_HORSES.get()
+    );
+    public static final Map<MemoryModuleType<GlobalPos>, BiPredicate<StableAttendant, Holder<PoiType>>> POI_MEMORIES = ImmutableMap.of(
+            MemoryModuleType.HOME,
+            (p_219625_, p_219626_) -> p_219626_.is(PoiTypes.HOME)
+    );
 
     protected StableAttendant(
             Level p_20967_
@@ -50,58 +79,43 @@ public class StableAttendant extends Mob {
             int index
     ) {
         super(EntitiesInit.STABLE_ATTENDANT.get(), level);
-        this.index = index;
         setItemSlot(EquipmentSlot.HEAD, ItemsInit.COWBOY_HAT.get().getDefaultInstance());
+        ((GroundPathNavigation) this.getNavigation()).setCanOpenDoors(true);
+        this.getNavigation().setCanFloat(true);
+        this.setCanPickUpLoot(false);
     }
 
-    protected void defineSynchedData() {
-        super.defineSynchedData();
-        this.entityData.define(DATA_ID_TYPE_VARIANT, 0);
+    public void die(DamageSource p_35419_) {
+        LOGGER.info("Villager {} died, message: '{}'", this, p_35419_.getLocalizedDeathMessage(this).getString());
+        this.releaseAllPois();
+        super.die(p_35419_);
+    }
+
+    private void releaseAllPois() {
+        this.releasePoi(MemoryModuleType.HOME);
+    }
+
+    public void releasePoi(MemoryModuleType<GlobalPos> p_35429_) {
+        if (this.level instanceof ServerLevel) {
+            MinecraftServer minecraftserver = ((ServerLevel) this.level).getServer();
+            this.brain.getMemory(p_35429_).ifPresent((p_186306_) -> {
+                ServerLevel serverlevel = minecraftserver.getLevel(p_186306_.dimension());
+                if (serverlevel != null) {
+                    PoiManager poimanager = serverlevel.getPoiManager();
+                    Optional<Holder<PoiType>> optional = poimanager.getType(p_186306_.pos());
+                    BiPredicate<StableAttendant, Holder<PoiType>> bipredicate = POI_MEMORIES.get(p_35429_);
+                    if (optional.isPresent() && bipredicate.test(this, optional.get())) {
+                        poimanager.release(p_186306_.pos());
+                        DebugPackets.sendPoiTicketCountPacket(serverlevel, p_186306_.pos());
+                    }
+
+                }
+            });
+        }
     }
 
     public static AttributeSupplier setAttributes() {
         return PathfinderMob.createMobAttributes().build();
-    }
-
-    public Object getVariant() {
-        return Variant.byId(this.getTypeVariant() & 255);
-    }
-
-    private int getTypeVariant() {
-        return this.entityData.get(DATA_ID_TYPE_VARIANT);
-    }
-
-    @Override
-    public void readAdditionalSaveData(CompoundTag p_21096_) {
-        super.readAdditionalSaveData(p_21096_);
-        this.setTypeVariant(p_21096_.getInt("Variant"));
-    }
-
-    private void setTypeVariant(int p_30737_) {
-        this.entityData.set(DATA_ID_TYPE_VARIANT, p_30737_);
-    }
-
-    @Override
-    public Iterable<ItemStack> getArmorSlots() {
-        return ImmutableList.of();
-    }
-
-    @Override
-    public ItemStack getItemBySlot(EquipmentSlot equipmentSlot) {
-        return ItemStack.EMPTY;
-    }
-
-    @Override
-    public void setItemSlot(
-            EquipmentSlot equipmentSlot,
-            ItemStack itemStack
-    ) {
-
-    }
-
-    @Override
-    public HumanoidArm getMainArm() {
-        return null;
     }
 
     @Override
@@ -121,29 +135,6 @@ public class StableAttendant extends Mob {
     }
 
     @Override
-    public boolean hurt(
-            DamageSource p_21016_,
-            float p_21017_
-    ) {
-        Entity hurter = p_21016_.getEntity();
-        if (hurter instanceof ServerPlayer sp) {
-            handleHorseAbuse(sp);
-        }
-        this.heal(getMaxHealth());
-        return false;
-    }
-
-    private void handleHorseAbuse(ServerPlayer sp) {
-        sp.sendSystemMessage(Component.literal("DON'T DO THAT!")); // TODO: Translate
-        sp.addEffect(new MobEffectInstance(MobEffects.BLINDNESS, 300));
-        sp.hurt(DamageSource.ANVIL, 1f);
-        sp.getLevel().playSound(null, getOnPos(), SoundEvents.ANVIL_HIT, SoundSource.BLOCKS, 1, 1);
-        for (int i = 0; i < 15; i++) { // There's probably a better way to do a "big push", but oh well.
-            sp.push(this);
-        }
-    }
-
-    @Override
     public void tick() {
         super.tick();
         if (!(level instanceof ServerLevel sl)) {
@@ -155,28 +146,54 @@ public class StableAttendant extends Mob {
         }
 
         tick = 0;
-
-        Player p = level.getNearestPlayer(this, 16);
-        if (p == null) {
-            return;
-        }
-
-        HHNBT hpd = HHNBT.getPersistentData(this);
-        BlockPos blockPos;
-        if (hpd.contains(HHNBT.Key.ANCHOR_POS)) {
-            blockPos = hpd.getBlockPos(HHNBT.Key.ANCHOR_POS);
-        } else {
-            blockPos = getOnPos().above();
-            hpd.put(HHNBT.Key.ANCHOR_POS, blockPos);
-        }
-
-        setPos(Vec3.atBottomCenterOf(blockPos));
     }
 
-    public void assumeFromTag(CompoundTag tag) {
-        this.deserializeNBT(tag);
-        HHNBT pd = HHNBT.getPersistentData(this);
-        pd.put(HHNBT.Key.REAL_HORSE_UUID, this.getUUID());
-        this.setUUID(UUID.randomUUID());
+    @Override
+    public void startSleeping(BlockPos p_21141_) {
+        super.startSleeping(p_21141_);
+        this.brain.setMemory(MemoryModuleType.LAST_SLEPT, this.level.getGameTime());
+        this.brain.eraseMemory(MemoryModuleType.WALK_TARGET);
+        this.brain.eraseMemory(MemoryModuleType.CANT_REACH_WALK_TARGET_SINCE);
+    }
+
+    public void stopSleeping() {
+        super.stopSleeping();
+        this.brain.setMemory(MemoryModuleType.LAST_WOKEN, this.level.getGameTime());
+    }
+
+    public Brain<StableAttendant> getBrain() {
+        return (Brain<StableAttendant>) super.getBrain();
+    }
+
+    protected Brain.Provider<StableAttendant> brainProvider() {
+        return Brain.provider(MEMORY_TYPES, SENSOR_TYPES);
+    }
+
+    protected Brain<?> makeBrain(Dynamic<?> p_35445_) {
+        Brain<StableAttendant> brain = this.brainProvider().makeBrain(p_35445_);
+        this.registerBrainGoals(brain);
+        return brain;
+    }
+
+    private void registerBrainGoals(Brain<StableAttendant> p_35425_) {
+        p_35425_.setSchedule(Schedule.VILLAGER_DEFAULT);
+        p_35425_.addActivity(Activity.CORE, SAGoalPackages.getCorePackage(0.5F));
+        p_35425_.addActivity(Activity.MEET, SAGoalPackages.getIdlePackage(0.5F));
+        p_35425_.addActivity(Activity.REST, SAGoalPackages.getRestPackage(0.5F));
+        p_35425_.addActivity(Activity.IDLE, SAGoalPackages.getIdlePackage(0.5F));
+        p_35425_.addActivity(Activity.WORK, SAGoalPackages.getWorkPackage(0.5F));
+        p_35425_.setCoreActivities(ImmutableSet.of(Activity.CORE));
+        p_35425_.setDefaultActivity(Activity.IDLE);
+        p_35425_.setActiveActivityIfPossible(Activity.IDLE);
+        p_35425_.updateActivityFromSchedule(this.level.getDayTime(), this.level.getGameTime());
+    }
+
+
+    @Override
+    protected void customServerAiStep() {
+        this.level.getProfiler().push("villagerBrain");
+        this.getBrain().tick((ServerLevel) this.level, this);
+        this.level.getProfiler().pop();
+        super.customServerAiStep();
     }
 }

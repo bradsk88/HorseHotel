@@ -47,6 +47,8 @@ public class HorseHotel {
 
         EntitiesInit.TILES.register(modEventBus);
 
+        SensorsInit.SENSORS.register(modEventBus);
+
         // Register ourselves for server and other game events we are interested in
         MinecraftForge.EVENT_BUS.register(this);
 
@@ -54,7 +56,10 @@ public class HorseHotel {
         context.registerConfig(ModConfig.Type.COMMON, Config.SPEC);
     }
 
-    public static void logBug(String s, Object... args) {
+    public static void logBug(
+            String s,
+            Object... args
+    ) {
         LOGGER.error(s, args);
         LOGGER.error("This is a bug. Please report it to https://github.com/bradsk88/horsehotel/issues");
     }
