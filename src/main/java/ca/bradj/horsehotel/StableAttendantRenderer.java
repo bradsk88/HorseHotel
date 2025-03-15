@@ -40,6 +40,7 @@ public class StableAttendantRenderer extends MobRenderer<StableAttendant, Villag
         super.render(p_115455_, p_115456_, p_115457_, stack, p_115459_, p_115460_);
         stack.pushPose();
         stack.mulPose(Vector3f.XP.rotationDegrees(180));
+        stack.mulPose(Vector3f.YP.rotationDegrees(p_115455_.yHeadRot));
         stack.scale(1.675f, 1.675f, 1.675f);
         stack.translate(0, -1.6, 0);
         this.hat.renderToBuffer(
