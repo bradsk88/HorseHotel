@@ -49,7 +49,7 @@ public class HHNBT {
             UUID uuid
     ) {
         tag.putUUID(buildKey(key), uuid);
-        LOGGER.debug("Stored[{}]:{}", buildKey(key), uuid);
+//        LOGGER.debug("Stored[{}]:{}", buildKey(key), uuid);
     }
 
     private static void put(
@@ -58,7 +58,7 @@ public class HHNBT {
             ListTag l
     ) {
         tag.put(buildKey(key), l);
-        LOGGER.debug("Stored[{}]:{}", buildKey(key), l);
+//        LOGGER.debug("Stored[{}]:{}", buildKey(key), l);
     }
 
     private static @NotNull String buildKey(Key key) {

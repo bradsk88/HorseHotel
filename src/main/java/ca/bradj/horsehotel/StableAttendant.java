@@ -145,6 +145,13 @@ public class StableAttendant extends PathfinderMob {
             return;
         }
 
+        HHNBT hpd = HHNBT.getPersistentData(this);
+        BlockPos blockPos;
+        if (!hpd.contains(HHNBT.Key.ANCHOR_POS)) {
+            blockPos = getOnPos().above();
+            hpd.put(HHNBT.Key.ANCHOR_POS, blockPos);
+        }
+
         tick = 0;
     }
 
@@ -177,11 +184,12 @@ public class StableAttendant extends PathfinderMob {
 
     private void registerBrainGoals(Brain<StableAttendant> p_35425_) {
         p_35425_.setSchedule(Schedule.VILLAGER_DEFAULT);
-        p_35425_.addActivity(Activity.CORE, SAGoalPackages.getCorePackage(0.5F));
-        p_35425_.addActivity(Activity.MEET, SAGoalPackages.getIdlePackage(0.5F));
-        p_35425_.addActivity(Activity.REST, SAGoalPackages.getRestPackage(0.5F));
-        p_35425_.addActivity(Activity.IDLE, SAGoalPackages.getIdlePackage(0.5F));
-        p_35425_.addActivity(Activity.WORK, SAGoalPackages.getWorkPackage(0.5F));
+        float walkModifier = 0.05F;
+        p_35425_.addActivity(Activity.CORE, SAGoalPackages.getCorePackage(walkModifier));
+        p_35425_.addActivity(Activity.MEET, SAGoalPackages.getIdlePackage(walkModifier));
+        p_35425_.addActivity(Activity.REST, SAGoalPackages.getRestPackage(walkModifier));
+        p_35425_.addActivity(Activity.IDLE, SAGoalPackages.getIdlePackage(walkModifier));
+        p_35425_.addActivity(Activity.WORK, SAGoalPackages.getWorkPackage(walkModifier));
         p_35425_.setCoreActivities(ImmutableSet.of(Activity.CORE));
         p_35425_.setDefaultActivity(Activity.IDLE);
         p_35425_.setActiveActivityIfPossible(Activity.IDLE);

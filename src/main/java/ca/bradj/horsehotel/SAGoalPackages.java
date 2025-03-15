@@ -6,6 +6,7 @@ import com.mojang.datafixers.util.Pair;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.MobCategory;
+import net.minecraft.world.entity.PathfinderMob;
 import net.minecraft.world.entity.ai.behavior.*;
 import net.minecraft.world.entity.ai.memory.MemoryModuleType;
 import net.minecraft.world.entity.ai.memory.MemoryStatus;
@@ -72,16 +73,17 @@ public class SAGoalPackages {
         return b.build();
     }
 
-    public static ImmutableList<Pair<Integer, Behavior<LivingEntity>>> getIdlePackage(float p_24600_) {
-        Behavior<LivingEntity> swtflt = new SetWalkTargetFromLookTarget(p_24600_, 2);
-        Pair<Behavior<? super LivingEntity>, Integer> walk = Pair.of(swtflt, 1);
-        Pair<Behavior<? super LivingEntity>, Integer> doNothing = Pair.of(new DoNothing(30, 60), 1);
-        ImmutableList.Builder<Pair<Behavior<? super LivingEntity>, Integer>> b = ImmutableList.builder();
+    public static ImmutableList<Pair<Integer, Behavior<? super PathfinderMob>>> getIdlePackage(float normalWalkMod) {
+        Behavior<LivingEntity> swtflt = new SetWalkTargetFromLookTarget(normalWalkMod, 2);
+        Pair<Behavior<? super PathfinderMob>, Integer> walk = Pair.of(swtflt, 1);
+        Pair<Behavior<? super PathfinderMob>, Integer> doNothing = Pair.of(new DoNothing(30, 60), 1);
+        ImmutableList.Builder<Pair<Behavior<? super PathfinderMob>, Integer>> b = ImmutableList.builder();
         b.add(walk);
         b.add(doNothing);
-        ImmutableList<Pair<Behavior<? super LivingEntity>, Integer>> pairs = b.build();
+        b.add(Pair.of(new StableBoundRandomStroll(normalWalkMod * 0.5f), 1));
+        ImmutableList<Pair<Behavior<? super PathfinderMob>, Integer>> pairs = b.build();
 
-        ImmutableList.Builder<Pair<Integer, Behavior<LivingEntity>>> b2 = ImmutableList.builder();
+        ImmutableList.Builder<Pair<Integer, Behavior<? super PathfinderMob>>> b2 = ImmutableList.builder();
         b2.add(Pair.of(2, new RunOne<>(pairs)));
         b2.add(Pair.of(3, new SetLookAndInteract(EntityType.PLAYER, 4)));
         b2.add(getFullLookBehavior());
@@ -90,7 +92,7 @@ public class SAGoalPackages {
         return b2.build();
     }
 
-    private static Pair<Integer, Behavior<LivingEntity>> getFullLookBehavior() {
+    private static Pair<Integer, Behavior<? super PathfinderMob>> getFullLookBehavior() {
         return Pair.of(
                 5, new RunOne<>(ImmutableList.of(
                         Pair.of(new SetEntityLookTarget(EntityType.CAT, 8.0F), 8),
