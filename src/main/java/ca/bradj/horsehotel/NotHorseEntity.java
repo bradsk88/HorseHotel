@@ -27,6 +27,8 @@ import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.level.Level;
+import net.minecraft.world.level.block.entity.BlockEntity;
+import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.Vec3;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -124,8 +126,21 @@ public class NotHorseEntity extends LivingEntity {
             Player player,
             InteractionHand p_19979_
     ) {
+        if (!(player instanceof ServerPlayer sp)) {
+            return InteractionResult.SUCCESS;
+        }
         if (Items.STRUCTURE_BLOCK.getDefaultInstance().sameItem(player.getItemInHand(p_19979_))) {
-            LOGGER.debug("Data is: {}", HHNBT.getPersistentData(this));
+            HHNBT hbt = HHNBT.getPersistentData(this);
+            LOGGER.debug("Data is: {}", hbt);
+            BlockState p46599 = BlocksInit.FAKE_HORSE_SPAWN_BLOCK.get().defaultBlockState();
+            sp.getLevel().setBlockAndUpdate(getOnPos(), p46599);
+            BlockEntity ent = sp.getLevel().getBlockEntity(getOnPos());
+            if (ent instanceof FakeHorseSpawnBlock.Entity e) {
+                e.settingUp = true;
+                HHNBT ebt = HHNBT.getPersistentData(e);
+                ebt.put(HHNBT.Key.REGISTERED_HORSE_INDEX, hbt.getInt(HHNBT.Key.REGISTERED_HORSE_INDEX));
+            }
+            remove(RemovalReason.KILLED);
             return InteractionResult.CONSUME;
         }
 

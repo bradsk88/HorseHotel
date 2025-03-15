@@ -125,7 +125,7 @@ public class StableAttendant extends PathfinderMob {
             InteractionHand p_19982_
     ) {
         if (!(player instanceof ServerPlayer sp)) {
-            return InteractionResult.CONSUME;
+            return InteractionResult.SUCCESS;
         }
         if (!InteractionHand.MAIN_HAND.equals(p_19982_)) {
             return InteractionResult.CONSUME;

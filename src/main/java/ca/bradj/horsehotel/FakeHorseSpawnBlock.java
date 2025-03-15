@@ -41,6 +41,9 @@ public class FakeHorseSpawnBlock extends BaseEntityBlock implements EntityBlock 
             InteractionHand p_60507_,
             BlockHitResult p_60508_
     ) {
+        if (player.getLevel().isClientSide) {
+            return InteractionResult.SUCCESS;
+        }
         if (Items.STRUCTURE_BLOCK.getDefaultInstance().sameItem(player.getItemInHand(p_60507_))) {
             HHNBT pd = HHNBT.getPersistentData(lvl.getBlockEntity(bp));
             int index = -1;
@@ -76,7 +79,7 @@ public class FakeHorseSpawnBlock extends BaseEntityBlock implements EntityBlock 
 
     public static class Entity extends BlockEntity {
 
-        private boolean settingUp;
+        boolean settingUp;
 
         public Entity(
                 BlockPos p_155229_,
@@ -107,6 +110,11 @@ public class FakeHorseSpawnBlock extends BaseEntityBlock implements EntityBlock 
             horse.setPos(Vec3.atBottomCenterOf(pos.above()));
             level.addFreshEntity(horse);
             level.setBlockAndUpdate(pos, Blocks.GRASS_BLOCK.defaultBlockState());
+            level.removeBlockEntity(pos);
+
+            if (index == 0) {
+                level.addFreshEntity(EntitiesInit.STABLE_ATTENDANT.get().create(level));
+            }
         }
 
         @SuppressWarnings("DataFlowIssue")
