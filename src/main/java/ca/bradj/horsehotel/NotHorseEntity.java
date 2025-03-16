@@ -3,7 +3,6 @@ package ca.bradj.horsehotel;
 import com.google.common.collect.ImmutableList;
 import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
-import net.minecraft.nbt.ListTag;
 import net.minecraft.nbt.Tag;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.syncher.EntityDataAccessor;
@@ -51,6 +50,7 @@ public class NotHorseEntity extends LivingEntity {
     private int tick = 0;
     private int index;
     private boolean warned;
+    private boolean everTicked;
 
     protected NotHorseEntity(
             Level p_20967_
@@ -184,12 +184,8 @@ public class NotHorseEntity extends LivingEntity {
             UUID spawnedHorse
     ) {
         HHNBT pd = HHNBT.getPersistentData(sp);
-        ListTag list = pd.getList(HHNBT.Key.REGISTERED_HORSES);
-        list.removeIf(tag -> {
-            @NotNull Horse holder = buildNewHorse(sp.getLevel());
-            holder.deserializeNBT((CompoundTag) tag);
-            return holder.getUUID().equals(spawnedHorse);
-        });
+        CompoundTag list = pd.getCompound(HHNBT.Key.REGISTERED_HORSES);
+        list.remove(spawnedHorse.toString());
         pd.put(HHNBT.Key.REGISTERED_HORSES, list);
     }
 
@@ -203,15 +199,25 @@ public class NotHorseEntity extends LivingEntity {
         HHNBT pd = HHNBT.getPersistentData(player);
         Horse newone;
         if (pd.contains(HHNBT.Key.REGISTERED_HORSES)) {
-            ListTag l = pd.getList(HHNBT.Key.REGISTERED_HORSES);
+            CompoundTag l = pd.getCompound(HHNBT.Key.REGISTERED_HORSES);
             if (l.size() < horseIndex + 1) {
                 LOGGER.debug("Index {} is greater than registry size {}", horseIndex, l.size());
                 return null;
             }
             newone = buildNewHorse(sl);
-            newone.deserializeNBT((CompoundTag) l.get(horseIndex));
+            ImmutableList<String> ids = ImmutableList.copyOf(l.getAllKeys());
+            String uuid = ids.get(horseIndex);
+            CompoundTag nbt = l.getCompound(uuid);
+            newone.deserializeNBT(nbt);
             newone.setPos(spawnPos.getX(), spawnPos.getY() + 1, spawnPos.getZ());
-            l.remove(horseIndex);
+            if (Config.storageType != Config.StorageType.BOTW) {
+                l.remove(uuid);
+            }
+            Entity existing = sl.getEntity(newone.getUUID());
+            if (existing instanceof Horse hExisting) {
+                existing.setPos(spawnPos.getX(), spawnPos.getY() + 1, spawnPos.getZ());
+                return hExisting;
+            }
             sl.addFreshEntity(newone);
             return newone;
         } else {
@@ -260,11 +266,12 @@ public class NotHorseEntity extends LivingEntity {
             return;
         }
 
-        if (tick++ < 100) {
+        if (tick++ < Config.horseRefreshInterval && !everTicked) {
             return;
         }
 
         tick = 0;
+        everTicked = true;
 
         Player p = level.getNearestPlayer(this, 16);
         if (p == null) {
@@ -273,6 +280,52 @@ public class NotHorseEntity extends LivingEntity {
 
         updateIndex();
         HHNBT hpd = HHNBT.getPersistentData(this);
+        moveToAnchor(hpd);
+
+        if (index >= 0) {
+            BlockPos pos = getOnPos();
+            HHNBT pd = HHNBT.getPersistentData(p);
+            CompoundTag pRegHorses = pd.getCompound(HHNBT.Key.REGISTERED_HORSES);
+            if (shouldHide(sl, pRegHorses, hpd)) {
+                setInvisible(true);
+                return;
+            }
+            setInvisible(false);
+            ImmutableList<String> ids = ImmutableList.copyOf(pRegHorses.getAllKeys());
+            Tag horse = pRegHorses.get(ids.get(index));
+            assumeFromTag((CompoundTag) horse);
+            setPos(Vec3.atBottomCenterOf(pos.above()));
+        }
+    }
+
+    private boolean shouldHide(
+            ServerLevel sl,
+            CompoundTag pRegHorses,
+            HHNBT t
+    ) {
+        if (index > pRegHorses.size() - 1) {
+            return true;
+        }
+        HHNBT.Key uuidKey = HHNBT.Key.REAL_HORSE_UUID;
+        if (t.contains(uuidKey) && isRealHorseNearby(sl, t.getUUID(uuidKey))) {
+            return true;
+        }
+        return false;
+    }
+
+    private boolean isRealHorseNearby(
+            ServerLevel sl,
+            UUID uuid
+    ) {
+        Entity horse = sl.getEntity(uuid);
+        if (horse == null) {
+            return false;
+        }
+        double distToRealHorse = horse.getOnPos().distSqr(getOnPos());
+        return distToRealHorse < 500; // TODO: Config. Draw-distance?
+    }
+
+    private void moveToAnchor(HHNBT hpd) {
         BlockPos blockPos;
         if (hpd.contains(HHNBT.Key.ANCHOR_POS)) {
             blockPos = hpd.getBlockPos(HHNBT.Key.ANCHOR_POS);
@@ -282,20 +335,6 @@ public class NotHorseEntity extends LivingEntity {
         }
 
         setPos(Vec3.atBottomCenterOf(blockPos));
-
-        if (index >= 0) {
-            HHNBT pd = HHNBT.getPersistentData(p);
-            ListTag pRegHorses = pd.getList(HHNBT.Key.REGISTERED_HORSES);
-            if (index > pRegHorses.size() - 1) {
-                setInvisible(true);
-                return;
-            }
-            setInvisible(false);
-            Tag horse = pRegHorses.get(index);
-            BlockPos pos = getOnPos();
-            assumeFromTag((CompoundTag) horse);
-            setPos(Vec3.atBottomCenterOf(pos.above()));
-        }
     }
 
     private void updateIndex() {

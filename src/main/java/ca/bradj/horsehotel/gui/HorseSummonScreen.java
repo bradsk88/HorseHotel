@@ -48,7 +48,7 @@ public class HorseSummonScreen extends Screen {
                 (s, c, p) -> this.renderCardContent(s, c, new ca.bradj.horsehotel.gui.Coordinate(p.x(), p.y())),
                 1,
                 0,
-                horses.size() > 2 ? 20 : 0
+                horses.size() > 2 ? 20 + BIG_PADDING : 0
         );
         this.horses = ImmutableList.copyOf(horses);
         ImmutableList.Builder<Entity> entities = ImmutableList.builder();

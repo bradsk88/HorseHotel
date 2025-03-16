@@ -65,15 +65,15 @@ public class HHNBT {
         return HorseHotel.MODID + "_" + key.value;
     }
 
-    private static ListTag getOrDefault(
+    private static CompoundTag getOrDefault(
             CompoundTag persistentData,
             Key key,
-            Supplier<ListTag> o
+            Supplier<CompoundTag> o
     ) {
         if (!persistentData.contains(buildKey(key))) {
             return o.get();
         }
-        return persistentData.getList(buildKey(key), Tag.TAG_COMPOUND);
+        return persistentData.getCompound(buildKey(key));
     }
 
     public static HHNBT getPersistentData(Entity player) {
@@ -92,10 +92,6 @@ public class HHNBT {
         return contains(delegate.get(), key);
     }
 
-    public ListTag getList(Key key) {
-        return getList(delegate.get(), key);
-    }
-
     public void put(
             Key key,
             UUID uuid
@@ -103,9 +99,9 @@ public class HHNBT {
         put(delegate.get(), key, uuid);
     }
 
-    public ListTag getOrDefault(
+    public CompoundTag getOrDefault(
             Key key,
-            Supplier<ListTag> o
+            Supplier<CompoundTag> o
     ) {
         return getOrDefault(delegate.get(), key, o);
     }

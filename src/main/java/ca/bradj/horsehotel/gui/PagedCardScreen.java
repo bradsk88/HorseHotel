@@ -94,7 +94,7 @@ public final class PagedCardScreen<D> {
         int y = bgY;
         int pageStringY = y + BIG_PADDING;
         y = pageStringY + BIG_PADDING;
-        int MAX_CARDS_PER_PAGE = (bgHeight - BIG_PADDING) / (cardHeight + SMALL_PADDING);
+        int MAX_CARDS_PER_PAGE = (bgHeight - BIG_PADDING - nextPage.getHeight()) / (cardHeight + SMALL_PADDING);
 
         int startIndex = currentPage * MAX_CARDS_PER_PAGE;
         int endIndex = Math.min(startIndex + MAX_CARDS_PER_PAGE, cardsData.size());

@@ -6,7 +6,6 @@ import ca.bradj.horsehotel.network.ShowHorseSummonScreenMessage;
 import ca.bradj.horsehotel.network.UIHorse;
 import com.google.common.collect.ImmutableList;
 import net.minecraft.nbt.CompoundTag;
-import net.minecraft.nbt.ListTag;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.animal.horse.Horse;
@@ -31,6 +30,16 @@ public class Registration {
             return;
         }
 
+        HHNBT pd = HHNBT.getPersistentData(player);
+        if (pd.contains(HHNBT.Key.REGISTERED_HORSES)) {
+            CompoundTag d = pd.getCompound(HHNBT.Key.REGISTERED_HORSES);
+            if (d.contains(veh.getUUID().toString())) {
+                storeHorseOnPlayer(player, veh);
+                veh.remove(Entity.RemovalReason.DISCARDED);
+                return;
+            }
+        }
+
         ShowHorseRegisterScreenMessage msg = new ShowHorseRegisterScreenMessage(veh.serializeNBT());
         HHNetwork.CHANNEL.send(PacketDistributor.PLAYER.with(() -> player), msg);
     }
@@ -44,9 +53,10 @@ public class Registration {
             LOGGER.debug("No data");
             return b.build();
         }
-        ListTag l = pd.getList(HHNBT.Key.REGISTERED_HORSES);
+        CompoundTag l = pd.getCompound(HHNBT.Key.REGISTERED_HORSES);
+        ImmutableList<String> keys = ImmutableList.copyOf(l.getAllKeys());
         for (int i = 0; i < l.size(); i++) {
-            b.add(new UIHorse(i, l.getCompound(i)));
+            b.add(new UIHorse(i, l.getCompound(keys.get(i))));
         }
         return b.build();
     }
@@ -63,8 +73,8 @@ public class Registration {
         nhd.put(HHNBT.Key.ARMOR_ITEM, vh.getArmor().serializeNBT());
         LOGGER.debug("Horse: {}", data);
         HHNBT pd = HHNBT.getPersistentData(player);
-        ListTag l = pd.getOrDefault(HHNBT.Key.REGISTERED_HORSES, ListTag::new);
-        l.add(data);
+        CompoundTag l = pd.getOrDefault(HHNBT.Key.REGISTERED_HORSES, CompoundTag::new);
+        l.put(veh.getUUID().toString(), data);
         pd.put(HHNBT.Key.REGISTERED_HORSES, l);
         return true;
     }
