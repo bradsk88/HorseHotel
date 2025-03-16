@@ -53,6 +53,9 @@ public class NotHorseMarkingLayer extends RenderLayer<NotHorseEntity, NotHorseMo
             float p_117066_,
             float p_117067_
     ) {
+        if (p_117061_.isInvisible()) {
+            return;
+        }
         ResourceLocation resourcelocation = LOCATION_BY_MARKINGS.get(p_117061_.getMarkings());
         if (resourcelocation != null && !p_117061_.isInvisible()) {
             VertexConsumer vertexconsumer = p_117059_.getBuffer(RenderType.entityTranslucent(resourcelocation));

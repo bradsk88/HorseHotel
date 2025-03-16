@@ -25,6 +25,9 @@ public class NotHorseArmorLayer extends RenderLayer<NotHorseEntity, NotHorseMode
     }
 
     public void render(PoseStack p_117032_, MultiBufferSource p_117033_, int p_117034_, NotHorseEntity p_117035_, float p_117036_, float p_117037_, float p_117038_, float p_117039_, float p_117040_, float p_117041_) {
+        if (p_117035_.isInvisible()) {
+            return;
+        }
         ItemStack itemstack = p_117035_.getArmor();
         if (itemstack.getItem() instanceof HorseArmorItem) {
             HorseArmorItem horsearmoritem = (HorseArmorItem)itemstack.getItem();
