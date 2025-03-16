@@ -6,14 +6,18 @@ import ca.bradj.horsehotel.network.ShowHorseSummonScreenMessage;
 import ca.bradj.horsehotel.network.UIHorse;
 import com.google.common.collect.ImmutableList;
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.animal.horse.Horse;
 import net.minecraft.world.entity.player.Player;
 import net.minecraftforge.network.PacketDistributor;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.UUID;
 
 public class Registration {
 
@@ -62,13 +66,13 @@ public class Registration {
     }
 
     public static boolean storeHorseOnPlayer(
-            Player player,
+            ServerPlayer player,
             net.minecraft.world.entity.Entity veh
     ) {
         if (!(veh instanceof Horse vh)) {
             return false;
         }
-        CompoundTag data = vh.serializeNBT();
+        CompoundTag data = updateDataToFullHealth(player.getLevel(), vh.serializeNBT());
         HHNBT nhd = new HHNBT(() -> data);
         nhd.put(HHNBT.Key.ARMOR_ITEM, vh.getArmor().serializeNBT());
         LOGGER.debug("Horse: {}", data);
@@ -79,13 +83,29 @@ public class Registration {
         return true;
     }
 
+    public static CompoundTag updateDataToFullHealth(
+            ServerLevel level,
+            CompoundTag data
+    ) {
+        Horse holder = EntityType.HORSE.create(level);
+        holder.deserializeNBT(data);
+        holder.setHealth(holder.getMaxHealth());
+        holder.hurtTime = 0;
+        data = holder.serializeNBT();
+        return data;
+    }
+
     public static @Nullable Entity getVehicleOrNull(ServerPlayer sender) {
         Entity vehicle = sender.getVehicle();
-        if (vehicle instanceof Horse) {
+        if (isRegisterable(vehicle)) {
             // TODO: Support registration of other rideable entities?
             return vehicle;
         }
         return null;
+    }
+
+    public static boolean isRegisterable(Entity vehicle) {
+        return vehicle instanceof Horse;
     }
 
     public static void storeRiddenHorse(ServerPlayer sender) {
@@ -96,5 +116,17 @@ public class Registration {
         }
         storeHorseOnPlayer(sender, veh);
         veh.remove(net.minecraft.world.entity.Entity.RemovalReason.DISCARDED);
+    }
+
+    public static boolean isAssociated(
+            ServerPlayer player,
+            UUID uuid
+    ) {
+        HHNBT hpd = HHNBT.getPersistentData(player);
+        if (!hpd.contains(HHNBT.Key.REGISTERED_HORSES)) {
+            return false;
+        }
+        CompoundTag horses = hpd.getCompound(HHNBT.Key.REGISTERED_HORSES);
+        return horses.getAllKeys().contains(uuid.toString());
     }
 }

@@ -208,7 +208,7 @@ public class NotHorseEntity extends LivingEntity {
             ImmutableList<String> ids = ImmutableList.copyOf(l.getAllKeys());
             String uuid = ids.get(horseIndex);
             CompoundTag nbt = l.getCompound(uuid);
-            newone.deserializeNBT(nbt);
+            newone.deserializeNBT(Registration.updateDataToFullHealth(sl, nbt));
             newone.setPos(spawnPos.getX(), spawnPos.getY() + 1, spawnPos.getZ());
             if (Config.storageType != Config.StorageType.BOTW) {
                 l.remove(uuid);
@@ -293,7 +293,7 @@ public class NotHorseEntity extends LivingEntity {
             setInvisible(false);
             ImmutableList<String> ids = ImmutableList.copyOf(pRegHorses.getAllKeys());
             Tag horse = pRegHorses.get(ids.get(index));
-            assumeFromTag((CompoundTag) horse);
+            assumeFromTag(sl, (CompoundTag) horse);
             setPos(Vec3.atBottomCenterOf(pos.above()));
         }
     }
@@ -356,8 +356,11 @@ public class NotHorseEntity extends LivingEntity {
         }
     }
 
-    public void assumeFromTag(CompoundTag tag) {
-        this.deserializeNBT(tag);
+    public void assumeFromTag(
+            ServerLevel sl,
+            CompoundTag tag
+    ) {
+        this.deserializeNBT(Registration.updateDataToFullHealth(sl, tag));
         HHNBT pd = HHNBT.getPersistentData(this);
         pd.put(HHNBT.Key.REAL_HORSE_UUID, this.getUUID());
         entityData.set(ARMOR_ITEM, ItemStack.of(new HHNBT(() -> tag).getCompound(HHNBT.Key.ARMOR_ITEM)));
