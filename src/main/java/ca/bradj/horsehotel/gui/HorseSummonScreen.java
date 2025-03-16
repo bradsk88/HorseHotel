@@ -5,14 +5,11 @@ import ca.bradj.horsehotel.network.HHNetwork;
 import ca.bradj.horsehotel.network.SummonHorseMessage;
 import ca.bradj.horsehotel.network.UIHorse;
 import com.google.common.collect.ImmutableList;
-import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.vertex.PoseStack;
-import com.mojang.math.Vector3f;
 import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.screens.Screen;
-import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.Rect2i;
-import net.minecraft.client.renderer.entity.EntityRenderDispatcher;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
@@ -26,6 +23,7 @@ import java.util.List;
 import java.util.UUID;
 
 import static ca.bradj.horsehotel.gui.GuiUtil.renderEntity;
+import static ca.bradj.horsehotel.gui.PagedCardScreen.BIG_PADDING;
 import static ca.bradj.horsehotel.gui.PagedCardScreen.Card;
 
 public class HorseSummonScreen extends Screen {
@@ -37,26 +35,26 @@ public class HorseSummonScreen extends Screen {
     private final ImmutableList<Entity> entities;
 
     public HorseSummonScreen(
-            Collection<UIHorse> jobs
+            Collection<UIHorse> horses
     ) {
         super(Compat.translatable("menu.work_add_confirm.title"));
 
         this.delegate = new PagedCardScreen<>(
                 () -> height,
                 () -> width,
-                () -> ImmutableList.copyOf(jobs),
+                () -> ImmutableList.copyOf(horses),
                 horse -> {
                 },
                 (s, c, p) -> this.renderCardContent(s, c, new ca.bradj.horsehotel.gui.Coordinate(p.x(), p.y())),
                 1,
                 0,
-                0
+                horses.size() > 2 ? 20 : 0
         );
-        this.horses = ImmutableList.copyOf(jobs);
+        this.horses = ImmutableList.copyOf(horses);
         ImmutableList.Builder<Entity> entities = ImmutableList.builder();
-        for (int i = 0; i < horses.size(); i++) {
+        for (int i = 0; i < this.horses.size(); i++) {
             Horse element = EntityType.HORSE.create(Minecraft.getInstance().level);
-            element.deserializeNBT(horses.get(i).horseData());
+            element.deserializeNBT(this.horses.get(i).horseData());
             element.setUUID(UUID.randomUUID());
             element.setYBodyRot(40);
             element.setYHeadRot(40);
@@ -79,8 +77,25 @@ public class HorseSummonScreen extends Screen {
 
     @Override
     protected void init() {
+        if (entities.isEmpty()) {
+            Minecraft.getInstance().setScreen(new WelcomeScreen());
+            return;
+        }
         super.init();
         this.delegate.afterInit(this::addRenderableWidget);
+
+        int pageTopY = ((this.height - delegate.backgroundHeight)) / 2;
+        int pageLeftX = ((this.width - PagedCardScreen.backgroundWidth) / 2);
+        int buttonHeight = (2 * font.lineHeight) + 2;
+        int buttonWidth = (PagedCardScreen.backgroundWidth - (2 * BIG_PADDING));
+        this.addRenderableWidget(new Button(
+                pageLeftX + BIG_PADDING,
+                pageTopY + delegate.backgroundHeight - buttonHeight - BIG_PADDING,
+                buttonWidth,
+                buttonHeight,
+                Compat.translatable("horsehotel.menus.common.what_is_this"),
+                (p_96776_) -> Minecraft.getInstance().setScreen(new WelcomeScreen())
+        ));
     }
 
     @Override

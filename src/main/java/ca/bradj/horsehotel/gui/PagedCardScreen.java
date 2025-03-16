@@ -9,11 +9,13 @@ import mezz.jei.api.gui.drawable.IDrawableStatic;
 import mezz.jei.common.util.ImmutableRect2i;
 import mezz.jei.common.util.MathUtil;
 import mezz.jei.gui.elements.GuiIconButtonSmall;
+import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiComponent;
 import net.minecraft.client.renderer.Rect2i;
 import org.apache.logging.log4j.util.TriConsumer;
 import org.jetbrains.annotations.NotNull;
+import org.lwjgl.glfw.GLFW;
 
 import java.util.List;
 import java.util.function.BiPredicate;
@@ -22,7 +24,7 @@ import java.util.function.Supplier;
 
 public final class PagedCardScreen<D> {
 
-    protected static final int backgroundWidth = 176;
+    public static final int backgroundWidth = 176;
     public final int backgroundHeight;
     protected static final int borderPadding = 6;
     protected static final int buttonWidth = 13;
@@ -275,6 +277,22 @@ public final class PagedCardScreen<D> {
         int x = (this.width.get() - backgroundWidth) / 2;
         int y = (this.height.get() - backgroundHeight) / 2;
         return ImmutableList.of(new Rect2i(x, y, backgroundWidth, backgroundHeight));
+    }
+
+    public boolean keyReleased(int keyCode) {
+        if (keyCode == GLFW.GLFW_KEY_Q || keyCode == GLFW.GLFW_KEY_E) { // TODO: Get from user's config
+            Minecraft.getInstance().setScreen(null);
+            return true;
+        }
+        if (keyCode == GLFW.GLFW_KEY_RIGHT) {
+            nextPage.onPress();
+            return true;
+        }
+        if (keyCode == GLFW.GLFW_KEY_LEFT) {
+            previousPage.onPress();
+            return true;
+        }
+        return false;
     }
 
     public record Card<D>(int index, CardCoordinates coords, D data) {

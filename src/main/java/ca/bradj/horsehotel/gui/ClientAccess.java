@@ -3,6 +3,7 @@ package ca.bradj.horsehotel.gui;
 import ca.bradj.horsehotel.network.ClientRunnable;
 import ca.bradj.horsehotel.network.ShowHorseRegisterScreenMessage;
 import ca.bradj.horsehotel.network.ShowHorseSummonScreenMessage;
+import ca.bradj.horsehotel.network.ShowWelcomeScreenMessage;
 import com.google.common.collect.ImmutableMap;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.screens.Screen;
@@ -22,6 +23,10 @@ public class ClientAccess {
         b.put(
                 ShowHorseRegisterScreenMessage.class,
                 (Object msg) -> new HorseRegisterScreen(((ShowHorseRegisterScreenMessage) msg).horseData)
+        );
+        b.put(
+                ShowWelcomeScreenMessage.class,
+                (Object msg) -> new WelcomeScreen()
         );
         creators = b.build();
     }

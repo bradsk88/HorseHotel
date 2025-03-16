@@ -53,6 +53,12 @@ public class HHNetwork {
                         decoder(ShowHorseRegisterScreenMessage::decode),
                 ShowHorseRegisterScreenMessage::handle
         ).add();
+        Compat.withConsumer(
+                registerMessage(ShowWelcomeScreenMessage.class, NetworkDirection.PLAY_TO_CLIENT).
+                        encoder(ShowWelcomeScreenMessage::encode).
+                        decoder(ShowWelcomeScreenMessage::decode),
+                ShowWelcomeScreenMessage::handle
+        ).add();
     }
 
     public static <T> SimpleChannel.MessageBuilder<T> registerMessage(

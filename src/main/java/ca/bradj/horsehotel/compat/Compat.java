@@ -13,6 +13,7 @@ import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.sounds.SoundEvent;
 import net.minecraft.sounds.SoundSource;
+import net.minecraft.util.FormattedCharSequence;
 import net.minecraft.util.RandomSource;
 import net.minecraft.world.MenuProvider;
 import net.minecraft.world.inventory.MenuType;
@@ -172,6 +173,16 @@ public class Compat {
             }
         }
         return false;
+    }
+
+    public static void drawDarkText(
+            Font font,
+            PoseStack stack,
+            FormattedCharSequence translatable,
+            int x,
+            int y
+    ) {
+        font.draw(stack, translatable, x, y, 0x00000000);
     }
 
     public static void drawDarkText(

@@ -2,7 +2,14 @@
   "horsehotel.menus.common.register":  "Register",
   "horsehotel.menus.common.close":  "Close",
   "horsehotel.menus.common.this_horse": "this horse",
+  "horsehotel.menus.common.what_is_this": "What is this?",
   "horsehotel.menus.register_horse.do_you_want_to_register":  "Do you want to register %s with the Horse Hotels?",
   "horsehotel.menus.register_horse.your_horse_will_be_kept_in_stable":  "Your horse will be kept here until you take it out.",
-  "horsehotel.menus.register_horse.also_other_stables":  "You will also find your horse at the other Horse Hotels."
+  "horsehotel.menus.register_horse.also_other_stables":  "You will also find your horse at the other Horse Hotels.",
+  "horsehotel.menus.welcome.welcome":  "Welcome to HorseHotel!",
+  "horsehotel.menus.welcome.horsehotel_network":  "HorseHotel is a network of stables throughout the overworld",
+  "horsehotel.menus.welcome.to_register_with_mob":  "To register a horse, talk to a Stable Attendant while riding.",
+  "horsehotel.menus.welcome.to_register_with_block":  "You can also use the Registry Block if the Stable Attendant is somewhere else.",
+  "horsehotel.menus.welcome.you_can_summon":  "Horses can be summoned from any HorseHotel stable.",
+  "horsehotel.menus.welcome.how_to_summon":  "Just interact with the Stable Attendant or Registry Block."
 }
