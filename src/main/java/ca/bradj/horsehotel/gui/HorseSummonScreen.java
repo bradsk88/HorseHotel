@@ -58,6 +58,7 @@ public class HorseSummonScreen extends Screen {
             element.setUUID(UUID.randomUUID());
             element.setYBodyRot(40);
             element.setYHeadRot(40);
+            element.equipSaddle(null);
             entities.add(element);
         }
         this.entities = entities.build();

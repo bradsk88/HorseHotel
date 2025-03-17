@@ -66,6 +66,21 @@ public class NotHorseEntity extends LivingEntity {
         this.index = index;
     }
 
+    @Override
+    public boolean isPickable() {
+        return !isInvisible();
+    }
+
+    @Override
+    public boolean isPushable() {
+        return false;
+    }
+
+    @Override
+    public boolean canCollideWith(Entity p_20303_) {
+        return false;
+    }
+
     public Markings getMarkings() {
         return Markings.byId((this.getTypeVariant() & '\uff00') >> 8);
     }
@@ -126,25 +141,32 @@ public class NotHorseEntity extends LivingEntity {
             Player player,
             InteractionHand p_19979_
     ) {
+        if (isInvisible()) {
+            return InteractionResult.PASS;
+        }
         if (!(player instanceof ServerPlayer sp)) {
             return InteractionResult.SUCCESS;
         }
         if (Items.STRUCTURE_BLOCK.getDefaultInstance().sameItem(player.getItemInHand(p_19979_))) {
-            HHNBT hbt = HHNBT.getPersistentData(this);
-            LOGGER.debug("Data is: {}", hbt);
-            BlockState p46599 = BlocksInit.FAKE_HORSE_SPAWN_BLOCK.get().defaultBlockState();
-            sp.getLevel().setBlockAndUpdate(getOnPos(), p46599);
-            BlockEntity ent = sp.getLevel().getBlockEntity(getOnPos());
-            if (ent instanceof FakeHorseSpawnBlock.Entity e) {
-                e.settingUp = true;
-                HHNBT ebt = HHNBT.getPersistentData(e);
-                ebt.put(HHNBT.Key.REGISTERED_HORSE_INDEX, hbt.getInt(HHNBT.Key.REGISTERED_HORSE_INDEX));
-            }
-            remove(RemovalReason.KILLED);
-            return InteractionResult.CONSUME;
+            return updateHorseData(sp);
         }
 
         trySpawnRealHorse(player, p_19979_);
+        return InteractionResult.CONSUME;
+    }
+
+    private @NotNull InteractionResult updateHorseData(ServerPlayer sp) {
+        HHNBT hbt = HHNBT.getPersistentData(this);
+        LOGGER.debug("Data is: {}", hbt);
+        BlockState p46599 = BlocksInit.FAKE_HORSE_SPAWN_BLOCK.get().defaultBlockState();
+        sp.getLevel().setBlockAndUpdate(getOnPos(), p46599);
+        BlockEntity ent = sp.getLevel().getBlockEntity(getOnPos());
+        if (ent instanceof FakeHorseSpawnBlock.Entity e) {
+            e.settingUp = true;
+            HHNBT ebt = HHNBT.getPersistentData(e);
+            ebt.put(HHNBT.Key.REGISTERED_HORSE_INDEX, hbt.getInt(HHNBT.Key.REGISTERED_HORSE_INDEX));
+        }
+        remove(RemovalReason.KILLED);
         return InteractionResult.CONSUME;
     }
 
@@ -183,6 +205,9 @@ public class NotHorseEntity extends LivingEntity {
             ServerPlayer sp,
             UUID spawnedHorse
     ) {
+        if (Config.storageType == Config.StorageType.BOTW) {
+            return;
+        }
         HHNBT pd = HHNBT.getPersistentData(sp);
         CompoundTag list = pd.getCompound(HHNBT.Key.REGISTERED_HORSES);
         list.remove(spawnedHorse.toString());
@@ -241,11 +266,6 @@ public class NotHorseEntity extends LivingEntity {
             handleHorseAbuse(sp);
         }
         this.heal(getMaxHealth());
-        return false;
-    }
-
-    @Override
-    public boolean isInvulnerable() {
         return false;
     }
 

@@ -204,4 +204,13 @@ public class StableAttendant extends PathfinderMob {
         this.level.getProfiler().pop();
         super.customServerAiStep();
     }
+
+    @Override
+    public boolean removeWhenFarAway(double p_21542_) {
+        return false;
+    }
+
+    @Override
+    protected void removeAfterChangingDimensions() {
+    }
 }

@@ -113,7 +113,9 @@ public class FakeHorseSpawnBlock extends BaseEntityBlock implements EntityBlock 
             level.removeBlockEntity(pos);
 
             if (index == 0) {
-                level.addFreshEntity(EntitiesInit.STABLE_ATTENDANT.get().create(level));
+                StableAttendant p46964 = EntitiesInit.STABLE_ATTENDANT.get().create(level);
+                p46964.setPos(Vec3.atBottomCenterOf(pos.above()));
+                level.addFreshEntity(p46964);
             }
         }
 

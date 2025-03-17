@@ -211,7 +211,7 @@ public class NotHorseModel extends AgeableListModel<NotHorseEntity> {
             float p_102789_,
             float p_102790_
     ) {
-        boolean flag = false;
+        boolean flag = true;
         boolean flag1 = p_102785_.isVehicle();
 
         for (ModelPart modelpart : this.saddleParts) {
