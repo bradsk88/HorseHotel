@@ -65,3 +65,10 @@ mandatory=true
 versionRange="${minecraft_version_range}"
 ordering="NONE"
 side="BOTH"
+# Here's another dependency
+[[dependencies.${mod_id}]]
+modId="jei"
+mandatory=true
+ordering="BEFORE"
+versionRange="[11.5,)"
+side="CLIENT"
