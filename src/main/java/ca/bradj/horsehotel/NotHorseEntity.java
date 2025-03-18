@@ -282,7 +282,13 @@ public class NotHorseEntity extends LivingEntity {
     @Override
     public void tick() {
         super.tick();
+
+        if (!everTicked) {
+            setInvisible(true);
+        }
+
         if (!(level instanceof ServerLevel sl)) {
+            everTicked = true;
             return;
         }
 

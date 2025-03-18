@@ -1,8 +1,10 @@
 package ca.bradj.horsehotel;
 
 import com.google.common.collect.Maps;
+import com.mojang.blaze3d.vertex.PoseStack;
 import net.minecraft.Util;
 import net.minecraft.client.model.geom.ModelLayers;
+import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.entity.EntityRendererProvider;
 import net.minecraft.client.renderer.entity.LivingEntityRenderer;
 import net.minecraft.resources.ResourceLocation;
@@ -46,5 +48,20 @@ public class NotHorseEntityRenderer extends LivingEntityRenderer<NotHorseEntity,
     @Override
     protected boolean shouldShowName(NotHorseEntity p_115333_) {
         return p_115333_.hasCustomName() && !p_115333_.isInvisible();
+    }
+
+    @Override
+    public void render(
+            NotHorseEntity p_115308_,
+            float p_115309_,
+            float p_115310_,
+            PoseStack p_115311_,
+            MultiBufferSource p_115312_,
+            int p_115313_
+    ) {
+        if (p_115308_.isInvisible()) {
+            return;
+        }
+        super.render(p_115308_, p_115309_, p_115310_, p_115311_, p_115312_, p_115313_);
     }
 }
