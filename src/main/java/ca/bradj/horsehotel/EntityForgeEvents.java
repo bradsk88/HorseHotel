@@ -21,7 +21,7 @@ public class EntityForgeEvents {
 
     @SubscribeEvent
     public static void handleHorseDeath(LivingDeathEvent event) {
-        LivingEntity entity = event.getEntity();
+        LivingEntity entity = (LivingEntity) event.getEntity();
         updateRegisteredHorse(entity);
     }
 

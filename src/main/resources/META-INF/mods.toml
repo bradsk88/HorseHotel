@@ -70,5 +70,5 @@ side="BOTH"
 modId="jei"
 mandatory=true
 ordering="BEFORE"
-versionRange="[11.5,)"
+versionRange="[9.7.0.195,)"
 side="CLIENT"

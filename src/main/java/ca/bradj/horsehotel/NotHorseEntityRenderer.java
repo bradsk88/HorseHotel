@@ -16,7 +16,7 @@ public class NotHorseEntityRenderer extends LivingEntityRenderer<NotHorseEntity,
 
     private static ResourceLocation tex(String name) {
         String file = String.format("textures/entity/horse/%s.png", name);
-        return ResourceLocation.tryBuild("minecraft", file);
+        return new ResourceLocation("minecraft", file);
     }
 
     // TODO: Access from Minecraft via Mixin

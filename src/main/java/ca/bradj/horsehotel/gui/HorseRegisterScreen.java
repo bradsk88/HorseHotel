@@ -126,7 +126,7 @@ public class HorseRegisterScreen extends Screen {
         int textX = bgX + MED_PADDING;
         int textY = horseY + horseSize + BIG_PADDING;
 
-        MutableComponent unnamed = Component.translatable("horsehotel.menus.common.this_horse");
+        Component unnamed = Compat.translatable("horsehotel.menus.common.this_horse");
         Component name = element.getCustomName() == null ? unnamed : element.getCustomName();
         Component t1 = Compat.translatable("horsehotel.menus.register_horse.do_you_want_to_register", name);
         Component t2 = Compat.translatable("horsehotel.menus.register_horse.your_horse_will_be_kept_in_stable");

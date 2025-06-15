@@ -33,8 +33,8 @@ public class HorseHotel {
     public static final Item.Properties DEFAULT_ITEM_PROPS = new Item.Properties().
             tab(ModItemGroup.HORSEHOTEL_GROUP);
 
-    public HorseHotel(FMLJavaModLoadingContext context) {
-        IEventBus modEventBus = context.getModEventBus();
+    public HorseHotel() {
+        IEventBus modEventBus = FMLJavaModLoadingContext.get().getModEventBus();
 
         // Register the commonSetup method for modloading
         modEventBus.addListener(this::commonSetup);
@@ -54,7 +54,7 @@ public class HorseHotel {
         MinecraftForge.EVENT_BUS.register(this);
 
         // Register our mod's ForgeConfigSpec so that Forge can create and load the config file for us
-        context.registerConfig(ModConfig.Type.SERVER, Config.SPEC);
+        ModLoadingContext.get().registerConfig(ModConfig.Type.SERVER, Config.SPEC, MODID + "-server.toml");
     }
 
     public static void logBug(

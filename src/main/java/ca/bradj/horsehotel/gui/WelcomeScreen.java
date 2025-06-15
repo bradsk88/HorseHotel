@@ -129,7 +129,7 @@ public class WelcomeScreen extends Screen {
                 int widthOfEntireFile = renderWidth * 3;
                 int heightOfEntireFile = renderHeight * 3;
                 int bgX = (width - renderWidth) / 2;
-                RenderSystem.setShaderTexture(0, ResourceLocation.tryBuild(HorseHotel.MODID, iContent.value()));
+                RenderSystem.setShaderTexture(0, new ResourceLocation(HorseHotel.MODID, iContent.value()));
                 GuiComponent.blit(
                         stack,
                         bgX,

@@ -24,7 +24,6 @@ import net.minecraft.world.entity.ai.sensing.Sensor;
 import net.minecraft.world.entity.ai.sensing.SensorType;
 import net.minecraft.world.entity.ai.village.poi.PoiManager;
 import net.minecraft.world.entity.ai.village.poi.PoiType;
-import net.minecraft.world.entity.ai.village.poi.PoiTypes;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.entity.schedule.Activity;
 import net.minecraft.world.entity.schedule.Schedule;
@@ -63,9 +62,9 @@ public class StableAttendant extends PathfinderMob {
             SensorType.NEAREST_PLAYERS,
             SensorsInit.JOBSITE_FROM_HORSES.get()
     );
-    public static final Map<MemoryModuleType<GlobalPos>, BiPredicate<StableAttendant, Holder<PoiType>>> POI_MEMORIES = ImmutableMap.of(
+    public static final Map<MemoryModuleType<GlobalPos>, BiPredicate<StableAttendant, PoiType>> POI_MEMORIES = ImmutableMap.of(
             MemoryModuleType.HOME,
-            (p_219625_, p_219626_) -> p_219626_.is(PoiTypes.HOME)
+            (p_219625_, p_219626_) -> p_219626_.equals(PoiType.HOME)
     );
 
     protected StableAttendant(
@@ -102,8 +101,8 @@ public class StableAttendant extends PathfinderMob {
                 ServerLevel serverlevel = minecraftserver.getLevel(p_186306_.dimension());
                 if (serverlevel != null) {
                     PoiManager poimanager = serverlevel.getPoiManager();
-                    Optional<Holder<PoiType>> optional = poimanager.getType(p_186306_.pos());
-                    BiPredicate<StableAttendant, Holder<PoiType>> bipredicate = POI_MEMORIES.get(p_35429_);
+                    Optional<PoiType> optional = poimanager.getType(p_186306_.pos());
+                    BiPredicate<StableAttendant, PoiType> bipredicate = POI_MEMORIES.get(p_35429_);
                     if (optional.isPresent() && bipredicate.test(this, optional.get())) {
                         poimanager.release(p_186306_.pos());
                         DebugPackets.sendPoiTicketCountPacket(serverlevel, p_186306_.pos());

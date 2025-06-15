@@ -16,7 +16,7 @@ import net.minecraftforge.api.distmarker.OnlyIn;
 
 @OnlyIn(Dist.CLIENT)
 public class StableAttendantRenderer extends MobRenderer<StableAttendant, VillagerModel<StableAttendant>> {
-    private static final ResourceLocation VILLAGER_BASE_SKIN = ResourceLocation.tryBuild(
+    private static final ResourceLocation VILLAGER_BASE_SKIN = new ResourceLocation(
             "minecraft",
             "textures/entity/villager/villager.png"
     );
@@ -24,7 +24,7 @@ public class StableAttendantRenderer extends MobRenderer<StableAttendant, Villag
 
     public StableAttendantRenderer(EntityRendererProvider.Context p_174437_) {
         super(p_174437_, new VillagerModel<>(p_174437_.bakeLayer(ModelLayers.VILLAGER)), 0.5F);
-        this.addLayer(new CustomHeadLayer<>(this, p_174437_.getModelSet(), p_174437_.getItemInHandRenderer()));
+        this.addLayer(new CustomHeadLayer<>(this, p_174437_.getModelSet()));
         this.hat = new CowboyHatModel();
     }
 
@@ -45,7 +45,7 @@ public class StableAttendantRenderer extends MobRenderer<StableAttendant, Villag
         stack.translate(0, -1.6, 0);
         this.hat.renderToBuffer(
                 stack,
-                p_115459_.getBuffer(RenderType.entitySolid(ResourceLocation.tryBuild("horsehotel", "textures/model/hat.png"))),
+                p_115459_.getBuffer(RenderType.entitySolid(new ResourceLocation("horsehotel", "textures/model/hat.png"))),
                 p_115460_,
                 OverlayTexture.NO_OVERLAY,
                 1.0f,

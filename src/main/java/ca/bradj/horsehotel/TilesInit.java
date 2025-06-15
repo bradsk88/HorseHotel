@@ -7,7 +7,7 @@ import net.minecraftforge.registries.RegistryObject;
 
 public class TilesInit {
     public static final DeferredRegister<BlockEntityType<?>> TILES = DeferredRegister.create(
-            ForgeRegistries.BLOCK_ENTITY_TYPES, HorseHotel.MODID
+            ForgeRegistries.BLOCK_ENTITIES, HorseHotel.MODID
     );
 
     public static final RegistryObject<BlockEntityType<RegisterBlock.Entity>> REGISTER_BLOCK = TILES.register(

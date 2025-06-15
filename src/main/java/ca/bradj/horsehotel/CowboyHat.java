@@ -7,7 +7,7 @@ import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.item.ArmorItem;
 import net.minecraft.world.item.ArmorMaterials;
 import net.minecraft.world.item.ItemStack;
-import net.minecraftforge.client.extensions.common.IClientItemExtensions;
+import net.minecraftforge.client.IItemRenderProperties;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -25,16 +25,16 @@ public class CowboyHat extends ArmorItem {
 
 
     @Override
-    public void initializeClient(Consumer<IClientItemExtensions> consumer) {
-        consumer.accept(new IClientItemExtensions() {
+    public void initializeClient(Consumer<IItemRenderProperties> consumer) {
+        consumer.accept(new IItemRenderProperties() {
             @Override
-            public @NotNull HumanoidModel<?> getHumanoidArmorModel(
-                    LivingEntity livingEntity,
+            public @Nullable HumanoidModel<?> getArmorModel(
+                    LivingEntity entityLiving,
                     ItemStack itemStack,
-                    EquipmentSlot equipmentSlot,
-                    HumanoidModel<?> original
+                    EquipmentSlot armorSlot,
+                    HumanoidModel<?> _default
             ) {
-                if (EquipmentSlot.HEAD == equipmentSlot) {
+                if (EquipmentSlot.HEAD == armorSlot) {
                     return new CowboyHatModel();
                 }
                 return null;

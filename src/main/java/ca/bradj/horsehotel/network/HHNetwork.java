@@ -14,7 +14,7 @@ public class HHNetwork {
     private static int messageIndex = 0;
 
     public static final SimpleChannel CHANNEL = NetworkRegistry.newSimpleChannel(
-            ResourceLocation.tryBuild(HorseHotel.MODID, "network"),
+            new ResourceLocation(HorseHotel.MODID, "network"),
             () -> NETWORK_VERSION,
             version -> version.equals(NETWORK_VERSION),
             version -> version.equals(NETWORK_VERSION)

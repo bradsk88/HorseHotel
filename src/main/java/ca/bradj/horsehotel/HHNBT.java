@@ -81,7 +81,7 @@ public class HHNBT {
     }
 
     public static HHNBT getPersistentData(BlockEntity player) {
-        return new HHNBT(player::getPersistentData);
+        return new HHNBT(player::getTileData);
     }
 
     public UUID getUUID(Key key) {

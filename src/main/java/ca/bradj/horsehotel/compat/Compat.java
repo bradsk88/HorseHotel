@@ -1,26 +1,34 @@
 package ca.bradj.horsehotel.compat;
 
+import ca.bradj.horsehotel.HHNBT;
+import ca.bradj.horsehotel.HorseHotel;
+import ca.bradj.horsehotel.gui.Coordinate;
+import com.google.common.collect.ImmutableCollection;
+import com.google.common.collect.ImmutableList;
 import com.mojang.blaze3d.vertex.PoseStack;
 import net.minecraft.client.gui.Font;
+import net.minecraft.client.renderer.ItemBlockRenderTypes;
+import net.minecraft.client.renderer.RenderType;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.network.FriendlyByteBuf;
-import net.minecraft.network.chat.Component;
-import net.minecraft.network.chat.MutableComponent;
-import net.minecraft.network.chat.Style;
+import net.minecraft.network.chat.*;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.sounds.SoundEvent;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.util.FormattedCharSequence;
-import net.minecraft.util.RandomSource;
 import net.minecraft.world.MenuProvider;
 import net.minecraft.world.inventory.MenuType;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.block.Block;
 import net.minecraftforge.common.ForgeConfigSpec;
+import net.minecraftforge.common.capabilities.Capability;
+import net.minecraftforge.eventbus.api.IEventBus;
+import net.minecraftforge.fml.event.lifecycle.ParallelDispatchEvent;
+import net.minecraftforge.items.CapabilityItemHandler;
 import net.minecraftforge.items.IItemHandler;
 import net.minecraftforge.network.NetworkEvent;
 import net.minecraftforge.network.NetworkHooks;
@@ -30,14 +38,14 @@ import net.minecraftforge.registries.ForgeRegistries;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.Collections;
+import java.util.Random;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
 
 public class Compat {
-    public static final RandomSource RANDOM = RandomSource.create();
+    public static final Random RANDOM = new Random();
 
     public static void playNeutralSound(
             ServerLevel serverLevel,
@@ -75,14 +83,14 @@ public class Compat {
     }
 
     public static Component translatable(String key) {
-        return Component.translatable(key);
+        return new TranslatableComponent(key);
     }
 
     public static MutableComponent translatable(
             String key,
             Object... args
     ) {
-        return Component.translatable(key, args);
+        return new TranslatableComponent(key, args);
     }
 
     public static Component translatableStyled(
@@ -96,11 +104,11 @@ public class Compat {
     }
 
     public static Component literal(String x) {
-        return Component.literal(x);
+        return new TextComponent(x);
     }
 
-    public static <X> ArrayList<X> shuffle(
-            Collection<X> c,
+    public static <X> ImmutableList<X> shuffle(
+            ImmutableCollection<X> c,
             ServerLevel serverLevel
     ) {
         ArrayList<X> list = new ArrayList<>(c);
@@ -108,7 +116,7 @@ public class Compat {
         for (int i = size; i > 1; --i) {
             Collections.swap(list, i - 1, serverLevel.getRandom().nextInt(i));
         }
-        return list;
+        return ImmutableList.copyOf(list);
     }
 
     public static int nextInt(
@@ -123,14 +131,14 @@ public class Compat {
     }
 
     public static void setCutoutRenderType(Block block) {
-        // Render layer is set via model JSON files
+        ItemBlockRenderTypes.setRenderLayer(block, RenderType.cutout());
     }
 
     public static <MSG> SimpleChannel.MessageBuilder<MSG> withConsumer(
             SimpleChannel.MessageBuilder<MSG> decoder,
             BiConsumer<MSG, Supplier<NetworkEvent.Context>> consumer
     ) {
-        return decoder.consumerNetworkThread(consumer);
+        return decoder.consumer(consumer);
     }
 
     public static void openScreen(
@@ -138,11 +146,23 @@ public class Compat {
             MenuProvider menuProvider,
             Consumer<FriendlyByteBuf> consumer
     ) {
-        NetworkHooks.openScreen(sender, menuProvider, consumer);
+        NetworkHooks.openGui(sender, menuProvider, consumer);
     }
 
     public static DeferredRegister<MenuType<?>> CreateMenuRegister(String modid) {
-        return DeferredRegister.create(ForgeRegistries.MENU_TYPES, modid);
+        return DeferredRegister.create(ForgeRegistries.CONTAINERS, modid);
+    }
+
+    public static void enqueueOrLog(
+            ParallelDispatchEvent event,
+            Runnable staticInitialize
+    ) {
+        event.enqueueWork(staticInitialize).exceptionally(
+                ex -> {
+                    HorseHotel.LOGGER.error("Enqueued work failed", ex);
+                    return null;
+                }
+        );
     }
 
     public static <X> Supplier<X> configGet(ForgeConfigSpec.ConfigValue<X> cfg) {
@@ -178,7 +198,7 @@ public class Compat {
     public static void drawDarkText(
             Font font,
             PoseStack stack,
-            FormattedCharSequence translatable,
+            Component translatable,
             int x,
             int y
     ) {
@@ -188,7 +208,7 @@ public class Compat {
     public static void drawDarkText(
             Font font,
             PoseStack stack,
-            Component translatable,
+            FormattedCharSequence translatable,
             int x,
             int y
     ) {
@@ -232,7 +252,31 @@ public class Compat {
             ServerPlayer sender,
             Component message
     ) {
-        sender.sendSystemMessage(message);
+        sender.sendMessage(message, sender.getUUID());
     }
 
+    public static void initCommands(IEventBus bus) {
+        // Only required on 1.19+
+    }
+
+    /**
+     * @return The number of vertical pixels used up when drawing the text
+     */
+    public static int drawDarkTextWrap(
+            Font font,
+            PoseStack poseStack,
+            Coordinate topLeft,
+            int textWidth,
+            Component translatable
+    ) {
+        int out = 0;
+        for (FormattedCharSequence line : font.split(translatable, textWidth)) {
+            drawDarkText(font, poseStack, line, topLeft.x(), topLeft.y() + out);
+            out += (int) (font.lineHeight * 1.5);
+        }
+        return out;
+    }
+    public static Capability<IItemHandler> getItemHandlerCapability() {
+        return CapabilityItemHandler.ITEM_HANDLER_CAPABILITY;
+    }
 }

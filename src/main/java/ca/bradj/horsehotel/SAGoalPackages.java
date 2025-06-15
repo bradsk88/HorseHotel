@@ -10,7 +10,7 @@ import net.minecraft.world.entity.PathfinderMob;
 import net.minecraft.world.entity.ai.behavior.*;
 import net.minecraft.world.entity.ai.memory.MemoryModuleType;
 import net.minecraft.world.entity.ai.memory.MemoryStatus;
-import net.minecraft.world.entity.ai.village.poi.PoiTypes;
+import net.minecraft.world.entity.ai.village.poi.PoiType;
 
 import java.util.Optional;
 
@@ -26,9 +26,8 @@ public class SAGoalPackages {
                 Pair.of(1, new MoveToTargetSink()),
                 Pair.of(
                         10, new AcquirePoi(
-                                (p_217499_) -> {
-                                    return p_217499_.is(PoiTypes.HOME);
-                                }, MemoryModuleType.HOME, false, Optional.of((byte) 14)
+                                PoiType.HOME,
+                                MemoryModuleType.HOME, false, Optional.of((byte) 14)
                         )
                 )
         );
@@ -53,9 +52,7 @@ public class SAGoalPackages {
         ImmutableList.Builder<Pair<Integer, ? extends Behavior<? super StableAttendant>>> b = ImmutableList.builder();
         b.add(Pair.of(
                 3, new ValidateNearbyPoi(
-                        (p_217495_) -> {
-                            return p_217495_.is(PoiTypes.HOME);
-                        }, MemoryModuleType.HOME
+                        PoiType.HOME, MemoryModuleType.HOME
                 )
         ));
         b.add(Pair.of(3, new SleepInBed()));

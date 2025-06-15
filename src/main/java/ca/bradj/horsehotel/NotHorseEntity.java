@@ -1,5 +1,6 @@
 package ca.bradj.horsehotel;
 
+import ca.bradj.horsehotel.compat.Compat;
 import com.google.common.collect.ImmutableList;
 import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
@@ -270,7 +271,7 @@ public class NotHorseEntity extends LivingEntity {
     }
 
     private void handleHorseAbuse(ServerPlayer sp) {
-        sp.sendSystemMessage(Component.literal("DON'T DO THAT!")); // TODO: Translate
+        Compat.sendMessage(sp, Compat.literal("DON'T DO THAT!")); // TODO: Translate
         sp.addEffect(new MobEffectInstance(MobEffects.BLINDNESS, 300));
         sp.hurt(DamageSource.ANVIL, 1f);
         sp.getLevel().playSound(null, getOnPos(), SoundEvents.ANVIL_HIT, SoundSource.BLOCKS, 1, 1);

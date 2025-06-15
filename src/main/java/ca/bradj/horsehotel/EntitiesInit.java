@@ -10,7 +10,7 @@ import net.minecraftforge.registries.RegistryObject;
 
 public class EntitiesInit {
     public static final DeferredRegister<EntityType<?>> TILES = DeferredRegister.create(
-            ForgeRegistries.ENTITY_TYPES, HorseHotel.MODID
+            ForgeRegistries.ENTITIES, HorseHotel.MODID
     );
 
     public static final RegistryObject<EntityType<NotHorseEntity>> FAKE_HORSE = TILES.register(
@@ -20,7 +20,7 @@ public class EntitiesInit {
                                     MobCategory.CREATURE
                             )
                                     .sized(0.6f, 1.6f)
-                                    .build(ResourceLocation.tryBuild(HorseHotel.MODID, NotHorseEntity.ID).toString())
+                                    .build(new ResourceLocation(HorseHotel.MODID, NotHorseEntity.ID).toString())
     );
 
     public static final RegistryObject<EntityType<StableAttendant>> STABLE_ATTENDANT = TILES.register(
@@ -30,7 +30,7 @@ public class EntitiesInit {
                                     MobCategory.CREATURE
                             )
                                     .sized(0.6f, 1.6f)
-                                    .build(ResourceLocation.tryBuild(HorseHotel.MODID, StableAttendant.ID).toString())
+                                    .build(new ResourceLocation(HorseHotel.MODID, StableAttendant.ID).toString())
     );
 
 }

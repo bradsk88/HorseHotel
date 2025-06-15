@@ -21,18 +21,18 @@ public class NotHorseMarkingLayer extends RenderLayer<NotHorseEntity, NotHorseMo
     private static final Map<Markings, ResourceLocation> LOCATION_BY_MARKINGS = Util.make(
             Maps.newEnumMap(Markings.class), (p_117069_) -> {
                 p_117069_.put(Markings.NONE, null);
-                p_117069_.put(Markings.WHITE, ResourceLocation.parse("textures/entity/horse/horse_markings_white.png"));
+                p_117069_.put(Markings.WHITE, ResourceLocation.tryParse("textures/entity/horse/horse_markings_white.png"));
                 p_117069_.put(
                         Markings.WHITE_FIELD,
-                        ResourceLocation.parse("textures/entity/horse/horse_markings_whitefield.png")
+                        ResourceLocation.tryParse("textures/entity/horse/horse_markings_whitefield.png")
                 );
                 p_117069_.put(
                         Markings.WHITE_DOTS,
-                        ResourceLocation.parse("textures/entity/horse/horse_markings_whitedots.png")
+                        ResourceLocation.tryParse("textures/entity/horse/horse_markings_whitedots.png")
                 );
                 p_117069_.put(
                         Markings.BLACK_DOTS,
-                        ResourceLocation.parse("textures/entity/horse/horse_markings_blackdots.png")
+                        ResourceLocation.tryParse("textures/entity/horse/horse_markings_blackdots.png")
                 );
             }
     );
