@@ -52,6 +52,12 @@ public class NotHorseEntity extends LivingEntity {
     private boolean warned;
     private boolean everTicked;
 
+    /**
+     * The player whose registry this stand-in is currently mirroring, or null if nobody has
+     * claimed it. Deliberately not saved: the claim is cosmetic and re-claiming is free.
+     */
+    private @Nullable UUID claimant;
+
     protected NotHorseEntity(
             Level p_20967_
     ) {
@@ -64,6 +70,12 @@ public class NotHorseEntity extends LivingEntity {
     ) {
         super(EntitiesInit.FAKE_HORSE.get(), level);
         this.index = index;
+
+        // Hidden from birth, on both sides. A stand-in is sent to clients as soon as they come
+        // within tracking range, which can happen before the server has ever ticked it — and an
+        // un-ticked stand-in that defaulted to visible is the blank white horse players saw in
+        // the distance. Visibility is only ever relaxed by tick(), once there is a horse to show.
+        setInvisible(true);
     }
 
     @Override
@@ -151,7 +163,7 @@ public class NotHorseEntity extends LivingEntity {
             return updateHorseData(sp);
         }
 
-        trySpawnRealHorse(player, p_19979_);
+        trySpawnRealHorse(sp, p_19979_);
         return InteractionResult.CONSUME;
     }
 
@@ -171,47 +183,36 @@ public class NotHorseEntity extends LivingEntity {
     }
 
     private void trySpawnRealHorse(
-            Player player,
+            ServerPlayer sp,
             InteractionHand p19979
     ) {
-
-        if (!(player instanceof ServerPlayer sp)) {
-            return;
-        }
         if (p19979 != InteractionHand.MAIN_HAND) {
             return;
         }
 
         HHNBT pd = HHNBT.getPersistentData(this);
-        if (!pd.contains(HHNBT.Key.REGISTERED_HORSE_INDEX)) {
-            LOGGER.error("Fake horse has no real-horse index in data {}", pd);
+        if (!pd.contains(HHNBT.Key.REAL_HORSE_UUID)) {
+            LOGGER.error("Stand-in has no real-horse UUID in data {}", pd);
             return;
         }
 
-        int uuid = pd.getInt(HHNBT.Key.REGISTERED_HORSE_INDEX);
+        UUID realHorse = pd.getUUID(HHNBT.Key.REAL_HORSE_UUID);
 
-        LOGGER.debug("Horse index: {}", uuid);
+        // A stand-in mirrors its claimant's registry, so the horse on display often belongs
+        // to somebody else. Interaction follows the horse you can see: own it and you get it,
+        // otherwise you get the same hotel UI as the register block or the attendant.
+        if (!Registration.isAssociated(sp, realHorse)) {
+            Registration.interactWithRegistry(sp);
+            return;
+        }
 
-        @Nullable Horse spawned = respawnRealHorse(uuid, getOnPos(), sp, sp.getLevel());
+        LOGGER.debug("Summoning horse: {}", realHorse);
+
+        @Nullable Horse spawned = respawnRealHorse(realHorse, getOnPos(), sp, sp.getLevel());
 
         if (spawned != null) {
-            deRegisterHorse(sp, spawned.getUUID());
-            sp.getLevel().addFreshEntity(spawned);
             sp.startRiding(spawned);
         }
-    }
-
-    private static void deRegisterHorse(
-            ServerPlayer sp,
-            UUID spawnedHorse
-    ) {
-        if (Config.storageType == Config.StorageType.BOTW) {
-            return;
-        }
-        HHNBT pd = HHNBT.getPersistentData(sp);
-        CompoundTag list = pd.getCompound(HHNBT.Key.REGISTERED_HORSES);
-        list.remove(spawnedHorse.toString());
-        pd.put(HHNBT.Key.REGISTERED_HORSES, list);
     }
 
 
@@ -251,6 +252,48 @@ public class NotHorseEntity extends LivingEntity {
         return null;
     }
 
+    /**
+     * Summons a specific registered horse. Unlike the index-based overload, this identifies the
+     * horse by its own UUID, so it cannot be thrown off by the registry being reordered between
+     * the moment a stand-in took on the horse's appearance and the moment a player clicks it.
+     */
+    public static @Nullable Horse respawnRealHorse(
+            UUID horseUuid,
+            BlockPos spawnPos,
+            Player player,
+            ServerLevel sl
+    ) {
+        HHNBT pd = HHNBT.getPersistentData(player);
+        if (!pd.contains(HHNBT.Key.REGISTERED_HORSES)) {
+            LOGGER.debug("No data on player");
+            return null;
+        }
+
+        CompoundTag registry = pd.getCompound(HHNBT.Key.REGISTERED_HORSES);
+        String key = horseUuid.toString();
+        if (!registry.contains(key)) {
+            LOGGER.debug("Horse {} is not in the player's registry", key);
+            return null;
+        }
+
+        CompoundTag horseData = registry.getCompound(key);
+        if (Config.storageType != Config.StorageType.BOTW) {
+            registry.remove(key);
+        }
+
+        Entity existing = sl.getEntity(horseUuid);
+        if (existing instanceof Horse hExisting) {
+            existing.setPos(spawnPos.getX(), spawnPos.getY() + 1, spawnPos.getZ());
+            return hExisting;
+        }
+
+        Horse newone = buildNewHorse(sl);
+        newone.deserializeNBT(Registration.updateDataToFullHealth(sl, horseData));
+        newone.setPos(spawnPos.getX(), spawnPos.getY() + 1, spawnPos.getZ());
+        sl.addFreshEntity(newone);
+        return newone;
+    }
+
     @SuppressWarnings("DataFlowIssue")
     private static @NotNull Horse buildNewHorse(ServerLevel sl) {
         return EntityType.HORSE.create(sl);
@@ -279,27 +322,44 @@ public class NotHorseEntity extends LivingEntity {
         }
     }
 
+    /**
+     * A stand-in is scenery, not a creature: it can never hold a potion effect, so vanilla's
+     * projection of potion state onto the invisible flag does not apply to it. Its visibility
+     * is owned entirely by {@link #tick()}.
+     * <p>
+     * Do not delete this override. The vanilla implementation re-derives the flag from potion
+     * effects whenever the effect set changes — including when assumeFromTag deserializes a
+     * registered horse that happens to be under an effect — and would overrule the stable.
+     */
+    @Override
+    protected void updateInvisibilityStatus() {
+    }
+
     @Override
     public void tick() {
         super.tick();
 
-        if (!everTicked) {
-            setInvisible(true);
-        }
-
+        // Only the server decides visibility. If a client forced the flag locally it would
+        // stick, and the server would never correct it: synched data is only pushed on change.
         if (!(level instanceof ServerLevel sl)) {
-            everTicked = true;
             return;
         }
 
-        if (tick++ < Config.horseRefreshInterval && !everTicked) {
+        if (!everTicked) {
+            // Stand-ins start hidden and are revealed only once we know there is a registered
+            // horse to show. The invisible flag is not saved to NBT, so this runs again after
+            // every chunk load.
+            setInvisible(true);
+        }
+
+        if (tick++ < Config.horseRefreshInterval) {
             return;
         }
 
         tick = 0;
         everTicked = true;
 
-        Player p = level.getNearestPlayer(this, 16);
+        Player p = resolveClaimant(sl);
         if (p == null) {
             return;
         }
@@ -322,6 +382,29 @@ public class NotHorseEntity extends LivingEntity {
             assumeFromTag(sl, (CompoundTag) horse);
             setPos(Vec3.atBottomCenterOf(pos.above()));
         }
+    }
+
+    /**
+     * Resolves which player's registry this stand-in mirrors. A claim is held for as long as the
+     * claimant stays within range, so a stable does not flip between players' horses as they move
+     * around it. Once the claim lapses, the nearest player in range takes it.
+     */
+    private @Nullable Player resolveClaimant(ServerLevel sl) {
+        double radius = Config.horseEvalRadius;
+
+        if (claimant != null) {
+            Player held = sl.getPlayerByUUID(claimant);
+            if (held != null && held.distanceToSqr(this) <= radius * radius) {
+                return held;
+            }
+            claimant = null;
+        }
+
+        Player nearest = sl.getNearestPlayer(this, radius);
+        if (nearest != null) {
+            claimant = nearest.getUUID();
+        }
+        return nearest;
     }
 
     private boolean shouldHide(

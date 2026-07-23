@@ -21,8 +21,6 @@ public class CowboyHat extends ArmorItem {
     public CowboyHat() {
         super(ArmorMaterials.LEATHER, EquipmentSlot.HEAD, PROPS);
     }
-    // TODO: Implement rendering
-
 
     @Override
     public void initializeClient(Consumer<IClientItemExtensions> consumer) {

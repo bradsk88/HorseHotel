@@ -92,6 +92,11 @@ minecraft {
         server {
             property 'forge.enabledGameTestNamespaces', mod_id
             args '--nogui'
+
+            // Forwards the autotest switch into the forked server JVM, so that
+            //     ./gradlew runServer -Dhorsehotel.autotest=true
+            // boots a self-halting server that runs the in-game suite. See docs/autotest.md.
+            jvmArg '-Dhorsehotel.autotest=' + System.getProperty('horsehotel.autotest', 'false')
         }
 
         // This run config launches GameTestServer and runs all registered gametests, then exits.

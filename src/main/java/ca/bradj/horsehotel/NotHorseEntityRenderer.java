@@ -35,7 +35,6 @@ public class NotHorseEntityRenderer extends LivingEntityRenderer<NotHorseEntity,
 
     public NotHorseEntityRenderer(EntityRendererProvider.Context p_174167_) {
         super(p_174167_, new NotHorseModel(p_174167_.bakeLayer(ModelLayers.HORSE)), 1.1F);
-        // TODO: Implement markings
         this.addLayer(new NotHorseMarkingLayer(this));
         this.addLayer(new NotHorseArmorLayer(this, p_174167_.getModelSet()));
     }
