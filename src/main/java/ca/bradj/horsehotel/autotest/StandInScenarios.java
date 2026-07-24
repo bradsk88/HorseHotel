@@ -267,8 +267,11 @@ public final class StandInScenarios {
                 }
             }
 
-            NotHorseEntity horse = new NotHorseEntity(level, 0);
-            HHNBT.getPersistentData(horse).put(HHNBT.Key.REGISTERED_HORSE_INDEX, 0);
+            // Past the stalls reserved for Stock, so these registry-display checks exercise the
+            // registry path rather than the Stock path (which reserves stalls 0..maxHorsesForSale-1).
+            int stallIndex = Config.maxHorsesForSale;
+            NotHorseEntity horse = new NotHorseEntity(level, stallIndex);
+            HHNBT.getPersistentData(horse).put(HHNBT.Key.REGISTERED_HORSE_INDEX, stallIndex);
             horse.moveTo(pos.getX() + 0.5, pos.getY(), pos.getZ() + 0.5);
             level.addFreshEntity(horse);
             standIn = horse;

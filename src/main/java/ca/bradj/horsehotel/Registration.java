@@ -1,10 +1,11 @@
 package ca.bradj.horsehotel;
 
 import ca.bradj.horsehotel.network.HHNetwork;
+import ca.bradj.horsehotel.network.OpenHotelMessage;
 import ca.bradj.horsehotel.network.ShowHorseRegisterScreenMessage;
-import ca.bradj.horsehotel.network.ShowHorseSummonScreenMessage;
 import ca.bradj.horsehotel.network.UIHorse;
 import com.google.common.collect.ImmutableList;
+import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
@@ -24,13 +25,14 @@ public class Registration {
     private static final Logger LOGGER = LogManager.getLogger();
 
     static void interactWithRegistry(
-            ServerPlayer player
+            ServerPlayer player,
+            BlockPos stablePos
     ) {
         net.minecraft.world.entity.Entity veh = getVehicleOrNull(player);
         if (veh == null) {
-            ImmutableList<UIHorse> fh = buildFakeHorses(player);
-            ShowHorseSummonScreenMessage msg = new ShowHorseSummonScreenMessage(fh);
-            HHNetwork.CHANNEL.send(PacketDistributor.PLAYER.with(() -> player), msg);
+            // Not riding anything registerable: open the hotel UI on its default tab. The tab and
+            // its Stock are decided server-side against this Stable's position.
+            HotelUI.open(player, stablePos, OpenHotelMessage.DEFAULT);
             return;
         }
 

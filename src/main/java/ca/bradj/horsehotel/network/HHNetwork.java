@@ -38,6 +38,18 @@ public class HHNetwork {
                         decoder(RegisterRiddenHorseMessage::decode),
                 RegisterRiddenHorseMessage::handle
         ).add();
+        Compat.withConsumer(
+                registerMessage(PurchaseHorseMessage.class, NetworkDirection.PLAY_TO_SERVER).
+                        encoder(PurchaseHorseMessage::encode).
+                        decoder(PurchaseHorseMessage::decode),
+                PurchaseHorseMessage::handle
+        ).add();
+        Compat.withConsumer(
+                registerMessage(OpenHotelMessage.class, NetworkDirection.PLAY_TO_SERVER).
+                        encoder(OpenHotelMessage::encode).
+                        decoder(OpenHotelMessage::decode),
+                OpenHotelMessage::handle
+        ).add();
     }
 
     private static void initMessagesToClient() {
@@ -58,6 +70,18 @@ public class HHNetwork {
                         encoder(ShowWelcomeScreenMessage::encode).
                         decoder(ShowWelcomeScreenMessage::decode),
                 ShowWelcomeScreenMessage::handle
+        ).add();
+        Compat.withConsumer(
+                registerMessage(ShowPurchaseScreenMessage.class, NetworkDirection.PLAY_TO_CLIENT).
+                        encoder(ShowPurchaseScreenMessage::encode).
+                        decoder(ShowPurchaseScreenMessage::decode),
+                ShowPurchaseScreenMessage::handle
+        ).add();
+        Compat.withConsumer(
+                registerMessage(ShowStockScreenMessage.class, NetworkDirection.PLAY_TO_CLIENT).
+                        encoder(ShowStockScreenMessage::encode).
+                        decoder(ShowStockScreenMessage::decode),
+                ShowStockScreenMessage::handle
         ).add();
     }
 

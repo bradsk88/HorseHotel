@@ -11,5 +11,12 @@
   "horsehotel.menus.welcome.to_register_with_mob":  "To register a horse, talk to a Stable Attendant while riding.",
   "horsehotel.menus.welcome.to_register_with_block":  "You can also use the Registry Block if the Stable Attendant is somewhere else.",
   "horsehotel.menus.welcome.you_can_summon":  "Horses can be summoned from any HorseHotel stable.",
-  "horsehotel.menus.welcome.how_to_summon":  "Just interact with the Stable Attendant or Registry Block."
+  "horsehotel.menus.welcome.how_to_summon":  "Just interact with the Stable Attendant or Registry Block.",
+  "horsehotel.standin.for_sale": "For Sale",
+  "horsehotel.menus.tabs.your_horses": "Your Horses",
+  "horsehotel.menus.tabs.for_sale": "Horses for Sale",
+  "horsehotel.menus.purchase.buy": "Buy",
+  "horsehotel.menus.purchase.do_you_want_to_buy": "Do you want to buy %s?",
+  "horsehotel.menus.purchase.it_is_free_for_now": "It's free, for now.",
+  "horsehotel.menus.purchase.already_sold": "That horse has already been sold."
 }

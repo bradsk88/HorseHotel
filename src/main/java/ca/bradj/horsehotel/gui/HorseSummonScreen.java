@@ -33,12 +33,16 @@ public class HorseSummonScreen extends Screen {
     private final List<UIHorse> horses;
     private final PagedCardScreen<UIHorse> delegate;
     private final ImmutableList<Entity> entities;
+    private final Tabs tabs;
 
     public HorseSummonScreen(
-            Collection<UIHorse> horses
+            Collection<UIHorse> horses,
+            boolean forSaleAvailable,
+            net.minecraft.core.BlockPos stablePos
     ) {
         super(Compat.translatable("menu.work_add_confirm.title"));
 
+        this.tabs = HotelTabs.forSummon(stablePos, forSaleAvailable);
         this.delegate = new PagedCardScreen<>(
                 () -> height,
                 () -> width,
@@ -108,8 +112,13 @@ public class HorseSummonScreen extends Screen {
     ) {
         this.renderBackground(stack);
         this.delegate.renderBg(stack, partialTicks, mouseX, mouseY);
+        int bgX = (this.width - PagedCardScreen.backgroundWidth) / 2;
+        int bgY = (this.height - delegate.backgroundHeight) / 2;
+        this.tabs.draw(stack, bgX, bgY);
         super.render(stack, mouseX, mouseY, partialTicks);
         this.delegate.afterRender(stack, font, mouseX, mouseY, partialTicks, horses, true);
+        this.tabs.renderTooltip(bgX, bgY, mouseX, mouseY,
+                key -> this.renderTooltip(stack, Compat.translatable(key), mouseX, mouseY));
     }
 
     @Override
@@ -118,6 +127,11 @@ public class HorseSummonScreen extends Screen {
             double y,
             int p_94697_
     ) {
+        int bgX = (this.width - PagedCardScreen.backgroundWidth) / 2;
+        int bgY = (this.height - delegate.backgroundHeight) / 2;
+        if (this.tabs.mouseClicked(bgX, bgY, x, y)) {
+            return true;
+        }
         Coordinate coord = new Coordinate((int) x, (int) y);
         for (Card<UIHorse> card : delegate.cards()) {
             if (GuiUtil.isCoordInBox(coord, card.coords().topLeft(), card.coords().bottomRight())) {

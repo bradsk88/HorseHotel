@@ -11,7 +11,7 @@ import net.minecraft.world.entity.Entity;
 
 public class GuiUtil {
 
-    private static boolean isCoordInBox(
+    public static boolean isCoordInBox(
             double mouseX,
             double mouseY,
             int leftX,

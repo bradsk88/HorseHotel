@@ -69,7 +69,10 @@ public class AutoTestRunner {
             HorseHotel.LOGGER.info("[autotest] Force-loaded chunk {}", chunk);
         }
 
-        ScenarioRunner runner = new ScenarioRunner(overworld, player, StandInScenarios.all(home));
+        java.util.List<Scenario> scenarios = new java.util.ArrayList<>();
+        scenarios.addAll(StandInScenarios.all(home));
+        scenarios.addAll(StockScenarios.all(home));
+        ScenarioRunner runner = new ScenarioRunner(overworld, player, scenarios);
         HorseHotel.LOGGER.info("[autotest] SUITE_START ({} scenarios)", runner.getTotal());
         MinecraftForge.EVENT_BUS.register(new AutoTestTickListener(server, runner));
     }

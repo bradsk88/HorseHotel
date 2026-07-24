@@ -29,10 +29,13 @@ import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.entity.schedule.Activity;
 import net.minecraft.world.entity.schedule.Schedule;
 import net.minecraft.world.level.Level;
+import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.jetbrains.annotations.Nullable;
 
+import java.util.Comparator;
 import java.util.Map;
 import java.util.Optional;
 import java.util.function.BiPredicate;
@@ -130,7 +133,7 @@ public class StableAttendant extends PathfinderMob {
         if (!InteractionHand.MAIN_HAND.equals(p_19982_)) {
             return InteractionResult.CONSUME;
         }
-        Registration.interactWithRegistry(sp);
+        Registration.interactWithRegistry(sp, getOnPos());
         return InteractionResult.CONSUME;
     }
 
@@ -152,7 +155,44 @@ public class StableAttendant extends PathfinderMob {
             hpd.put(HHNBT.Key.ANCHOR_POS, blockPos);
         }
 
+        maybeRestock(sl, hpd);
+
         tick = 0;
+    }
+
+    /**
+     * Rolls the initial Stock on the first tick (no deadline yet) and re-rolls whenever the
+     * absolute game-tick deadline has passed. An absolute deadline rather than a countdown is what
+     * lets this survive chunk unloading: game time keeps advancing while the Attendant is frozen,
+     * so the first tick after a player returns sees {@code now >= deadline} and restocks at once.
+     */
+    private void maybeRestock(
+            ServerLevel sl,
+            HHNBT hpd
+    ) {
+        long now = sl.getGameTime();
+        boolean due = !hpd.contains(HHNBT.Key.RESTOCK_DEADLINE) || now >= hpd.getLong(HHNBT.Key.RESTOCK_DEADLINE);
+        if (!due) {
+            return;
+        }
+        Stock.restock(sl, hpd, getOnPos(), Config.maxHorsesForSale);
+        hpd.put(HHNBT.Key.RESTOCK_DEADLINE, now + Config.restockIntervalTicks);
+    }
+
+    /**
+     * The Stable's Stock is held by its Attendant, so it is reached by finding the nearest one. A
+     * killed Attendant means no Stock — the shop is simply gone.
+     */
+    public static @Nullable StableAttendant findNearest(
+            ServerLevel sl,
+            BlockPos pos,
+            double radius
+    ) {
+        Vec3 center = Vec3.atCenterOf(pos);
+        return sl.getEntitiesOfClass(StableAttendant.class, new AABB(pos).inflate(radius))
+                .stream()
+                .min(Comparator.comparingDouble(a -> a.distanceToSqr(center)))
+                .orElse(null);
     }
 
     @Override

@@ -1,8 +1,11 @@
 package ca.bradj.horsehotel;
 
+import ca.bradj.horsehotel.network.HHNetwork;
+import ca.bradj.horsehotel.network.ShowPurchaseScreenMessage;
 import com.google.common.collect.ImmutableList;
 import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
+import net.minecraftforge.network.PacketDistributor;
 import net.minecraft.nbt.Tag;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.syncher.EntityDataAccessor;
@@ -46,6 +49,17 @@ public class NotHorseEntity extends LivingEntity {
     private static final EntityDataAccessor<ItemStack> ARMOR_ITEM = SynchedEntityData.defineId(
             NotHorseEntity.class,
             EntityDataSerializers.ITEM_STACK
+    );
+    /**
+     * Whether this stand-in is currently mirroring a Stock horse (for sale) rather than a
+     * registered one. A dedicated accessor, not a bit packed into the variant int, because
+     * {@link #readAdditionalSaveData} overwrites the variant wholesale on every refresh — this is
+     * the only piece of state immune to the {@link #assumeFromTag} clobber. Drives the client-side
+     * for-sale treatment (glow, and routing a click to the purchase screen).
+     */
+    private static final EntityDataAccessor<Boolean> FOR_SALE = SynchedEntityData.defineId(
+            NotHorseEntity.class,
+            EntityDataSerializers.BOOLEAN
     );
     private int tick = 0;
     private int index;
@@ -101,6 +115,12 @@ public class NotHorseEntity extends LivingEntity {
         super.defineSynchedData();
         this.entityData.define(DATA_ID_TYPE_VARIANT, 0);
         this.entityData.define(ARMOR_ITEM, ItemStack.EMPTY);
+        this.entityData.define(FOR_SALE, false);
+    }
+
+    /** True when this stand-in is showing a Stock horse the Stable has for sale. */
+    public boolean isForSale() {
+        return this.entityData.get(FOR_SALE);
     }
 
     public static AttributeSupplier setAttributes() {
@@ -113,6 +133,11 @@ public class NotHorseEntity extends LivingEntity {
 
     private int getTypeVariant() {
         return this.entityData.get(DATA_ID_TYPE_VARIANT);
+    }
+
+    /** The raw color+markings variant int this stand-in is currently displaying. Autotest only. */
+    public int getTypeVariantForTest() {
+        return getTypeVariant();
     }
 
     @Override
@@ -163,8 +188,38 @@ public class NotHorseEntity extends LivingEntity {
             return updateHorseData(sp);
         }
 
+        // A for-sale stand-in mirrors the Stable's Stock, which is in nobody's Registry, so it must
+        // route to the purchase screen rather than the summon/registry path that a registered
+        // stand-in takes.
+        if (isForSale()) {
+            if (p_19979_ == InteractionHand.MAIN_HAND) {
+                openPurchaseConfirm(sp);
+            }
+            return InteractionResult.CONSUME;
+        }
+
         trySpawnRealHorse(sp, p_19979_);
         return InteractionResult.CONSUME;
+    }
+
+    private void openPurchaseConfirm(ServerPlayer sp) {
+        ServerLevel sl = sp.getLevel();
+        BlockPos stablePos = getOnPos();
+        StableAttendant att = StableAttendant.findNearest(sl, stablePos, Config.horseEvalRadius);
+        if (att == null) {
+            return;
+        }
+        HHNBT ad = HHNBT.getPersistentData(att);
+        // A stand-in's stall index doubles as its Stock slot index (Stock fills stalls 0..N-1).
+        UUID stockUuid = Stock.uuid(ad, index);
+        CompoundTag data = Stock.horseData(ad, index);
+        if (stockUuid == null || data == null) {
+            return;
+        }
+        HHNetwork.CHANNEL.send(
+                PacketDistributor.PLAYER.with(() -> sp),
+                new ShowPurchaseScreenMessage(stockUuid, data, stablePos)
+        );
     }
 
     private @NotNull InteractionResult updateHorseData(ServerPlayer sp) {
@@ -202,7 +257,7 @@ public class NotHorseEntity extends LivingEntity {
         // to somebody else. Interaction follows the horse you can see: own it and you get it,
         // otherwise you get the same hotel UI as the register block or the attendant.
         if (!Registration.isAssociated(sp, realHorse)) {
-            Registration.interactWithRegistry(sp);
+            Registration.interactWithRegistry(sp, getOnPos());
             return;
         }
 
@@ -359,29 +414,73 @@ public class NotHorseEntity extends LivingEntity {
         tick = 0;
         everTicked = true;
 
+        updateIndex();
+        HHNBT hpd = HHNBT.getPersistentData(this);
+        moveToAnchor(hpd);
+
+        // The reserved low stalls mirror the Stable's Stock, which is the same for everyone and
+        // needs no Claimant. Resolve them first so a player who has registered nothing still walks
+        // up to a stocked barn rather than empty stalls.
+        if (index >= 0 && index < Config.maxHorsesForSale) {
+            showStockOrHide(sl);
+            return;
+        }
+
         Player p = resolveClaimant(sl);
         if (p == null) {
             return;
         }
 
-        updateIndex();
-        HHNBT hpd = HHNBT.getPersistentData(this);
-        moveToAnchor(hpd);
-
         if (index >= 0) {
+            // Stock reserves stalls 0..maxHorsesForSale-1, so a registry stall's own horse sits
+            // maxHorsesForSale slots earlier in the registry than its stall index.
+            int regIndex = index - Config.maxHorsesForSale;
             BlockPos pos = getOnPos();
             HHNBT pd = HHNBT.getPersistentData(p);
             CompoundTag pRegHorses = pd.getCompound(HHNBT.Key.REGISTERED_HORSES);
-            if (shouldHide(sl, pRegHorses, hpd)) {
+            if (shouldHide(sl, pRegHorses, hpd, regIndex)) {
                 setInvisible(true);
                 return;
             }
             setInvisible(false);
             ImmutableList<String> ids = ImmutableList.copyOf(pRegHorses.getAllKeys());
-            Tag horse = pRegHorses.get(ids.get(index));
+            Tag horse = pRegHorses.get(ids.get(regIndex));
             assumeFromTag(sl, (CompoundTag) horse);
+            // A registered horse is never for sale — clear the treatment assumeFromTag may have
+            // left on, then hold it off (deserializeNBT re-derives glow from the tag).
+            this.entityData.set(FOR_SALE, false);
+            setGlowingTag(false);
             setPos(Vec3.atBottomCenterOf(pos.above()));
         }
+    }
+
+    /**
+     * Displays the Stock horse belonging to this stand-in's reserved stall, or hides the stand-in
+     * when the Stable has no Attendant, no Stock, or an empty slot there. The Stock lives on the
+     * nearest {@link StableAttendant}; a stand-in's stall index doubles as its Stock slot index,
+     * since Stock occupies stalls 0..maxHorsesForSale-1 directly.
+     */
+    private void showStockOrHide(ServerLevel sl) {
+        StableAttendant att = StableAttendant.findNearest(sl, getOnPos(), Config.horseEvalRadius);
+        CompoundTag data = att == null ? null : Stock.horseData(HHNBT.getPersistentData(att), index);
+        if (data == null) {
+            this.entityData.set(FOR_SALE, false);
+            setCustomNameVisible(false);
+            setInvisible(true);
+            return;
+        }
+        // Capture the stall position *before* assumeFromTag: deserializing the Stock horse's NBT
+        // includes its stored position — the Attendant's location, shared by every Stock horse — so
+        // reading getOnPos() afterwards would stack all the Stand-Ins on that one underground spot.
+        BlockPos pos = getOnPos();
+        setInvisible(false);
+        assumeFromTag(sl, data);
+        // A "For Sale" nameplate marks the stock horse. Re-applied after assumeFromTag, which
+        // deserializes the horse's own (absent) name and turns name-visibility off every time.
+        this.entityData.set(FOR_SALE, true);
+        setCustomName(Component.translatable("horsehotel.standin.for_sale"));
+        setCustomNameVisible(true);
+        setPos(Vec3.atBottomCenterOf(pos.above()));
     }
 
     /**
@@ -410,9 +509,10 @@ public class NotHorseEntity extends LivingEntity {
     private boolean shouldHide(
             ServerLevel sl,
             CompoundTag pRegHorses,
-            HHNBT t
+            HHNBT t,
+            int regIndex
     ) {
-        if (index > pRegHorses.size() - 1) {
+        if (regIndex > pRegHorses.size() - 1) {
             return true;
         }
         HHNBT.Key uuidKey = HHNBT.Key.REAL_HORSE_UUID;

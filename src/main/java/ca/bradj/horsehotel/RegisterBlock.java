@@ -35,13 +35,14 @@ public class RegisterBlock extends Block implements EntityBlock {
             InteractionHand p_60507_,
             BlockHitResult p_60508_
     ) {
-        tryUseRegisterBlock(p_60507_, player);
+        tryUseRegisterBlock(p_60507_, player, bp);
         return InteractionResult.CONSUME;
     }
 
     private void tryUseRegisterBlock(
             InteractionHand hand,
-            Player player
+            Player player,
+            BlockPos stablePos
     ) {
         if (hand != InteractionHand.MAIN_HAND) {
             return;
@@ -56,7 +57,7 @@ public class RegisterBlock extends Block implements EntityBlock {
             return;
         }
 
-        Registration.interactWithRegistry(sp);
+        Registration.interactWithRegistry(sp, stablePos);
     }
 
     @Override

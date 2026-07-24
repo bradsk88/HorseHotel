@@ -3,6 +3,8 @@ package ca.bradj.horsehotel.gui;
 import ca.bradj.horsehotel.network.ClientRunnable;
 import ca.bradj.horsehotel.network.ShowHorseRegisterScreenMessage;
 import ca.bradj.horsehotel.network.ShowHorseSummonScreenMessage;
+import ca.bradj.horsehotel.network.ShowPurchaseScreenMessage;
+import ca.bradj.horsehotel.network.ShowStockScreenMessage;
 import ca.bradj.horsehotel.network.ShowWelcomeScreenMessage;
 import com.google.common.collect.ImmutableMap;
 import net.minecraft.client.Minecraft;
@@ -18,7 +20,24 @@ public class ClientAccess {
         ImmutableMap.Builder<Class<? extends ClientRunnable>, Function<Object, Screen>> b = ImmutableMap.builder();
         b.put(
                 ShowHorseSummonScreenMessage.class,
-                (Object msg) -> new HorseSummonScreen(((ShowHorseSummonScreenMessage) msg).horses())
+                (Object msg) -> {
+                    ShowHorseSummonScreenMessage m = (ShowHorseSummonScreenMessage) msg;
+                    return new HorseSummonScreen(m.horses(), m.forSaleAvailable(), m.stablePos());
+                }
+        );
+        b.put(
+                ShowStockScreenMessage.class,
+                (Object msg) -> {
+                    ShowStockScreenMessage m = (ShowStockScreenMessage) msg;
+                    return new StockScreen(m.stock(), m.yourHorsesAvailable(), m.stablePos());
+                }
+        );
+        b.put(
+                ShowPurchaseScreenMessage.class,
+                (Object msg) -> {
+                    ShowPurchaseScreenMessage m = (ShowPurchaseScreenMessage) msg;
+                    return new PurchaseScreen(m.stockUuid, m.horseData, m.stablePos);
+                }
         );
         b.put(
                 ShowHorseRegisterScreenMessage.class,

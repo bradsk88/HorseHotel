@@ -128,6 +128,21 @@ public class HHNBT {
         delegate.get().putInt(buildKey(key), i);
     }
 
+    public long getLong(Key key) {
+        return delegate.get().getLong(buildKey(key));
+    }
+
+    public void put(
+            Key key,
+            long l
+    ) {
+        delegate.get().putLong(buildKey(key), l);
+    }
+
+    public ListTag getList(Key key) {
+        return delegate.get().getList(buildKey(key), Tag.TAG_COMPOUND);
+    }
+
     public void put(
             Key key,
             BlockPos above
@@ -165,7 +180,9 @@ public class HHNBT {
         REAL_HORSE_UUID("real_horse_uuid"),
         REGISTERED_HORSE_INDEX("registered_horse_index"),
         ANCHOR_POS("anchor_pos"),
-        ARMOR_ITEM("armor_item");
+        ARMOR_ITEM("armor_item"),
+        STOCK("stock"),
+        RESTOCK_DEADLINE("restock_deadline");
 
         private final String value;
 
