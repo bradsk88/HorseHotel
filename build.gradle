@@ -12,6 +12,14 @@ base {
     archivesName = mod_id
 }
 
+// Load .env if present (gitignored — store secrets like MODRINTH_TOKEN and MODRINTH_PROJECT_ID here)
+def dotEnvFile = file('.env')
+if (dotEnvFile.exists()) {
+    def dotEnv = new Properties()
+    dotEnvFile.withInputStream { dotEnv.load(it) }
+    dotEnv.each { k, v -> ext.set(k as String, v as String) }
+}
+
 // Mojang ships Java 17 to end users in 1.18+, so your mod should target Java 17.
 java.toolchain.languageVersion = JavaLanguageVersion.of(17)
 
@@ -195,6 +203,36 @@ publishing {
     repositories {
         maven {
             url "file://${project.projectDir}/mcmodsrepo"
+        }
+    }
+}
+
+// Ported from Questown: publish the reobfuscated jar to Modrinth via the HTTP API. Secrets come
+// from .env (gitignored) or the environment. Unlike Questown (which versions from the branch name),
+// this uses mod_version, so bump gradle.properties before publishing.
+publish.dependsOn('publishModrinth')
+
+task publishModrinth(dependsOn: 'reobfJar') {
+    group = 'publishing'
+    doLast {
+        def token = project.findProperty("MODRINTH_TOKEN") ?: System.getenv("MODRINTH_TOKEN") ?: ""
+        def projectId = project.findProperty("MODRINTH_PROJECT_ID") ?: System.getenv("MODRINTH_PROJECT_ID") ?: ""
+        if (!token) throw new GradleException("MODRINTH_TOKEN not set — put it in .env")
+        if (!projectId) throw new GradleException("MODRINTH_PROJECT_ID not set — put it in .env")
+
+        def changelog = (project.findProperty("CHANGELOG") ?: System.getenv("CHANGELOG") ?: "")
+                .replace('"', '\\"').replace('\n', '\\n')
+        def jarPath = jar.archivePath.absolutePath
+        def versionStr = version.toString()
+        def versionType = versionStr.contains("alpha") ? "alpha" : versionStr.contains("beta") ? "beta" : "release"
+
+        def data = """{"name":"${mod_name} ${versionStr}","version_number":"${versionStr}","version_type":"${versionType}","featured":false,"game_versions":["${minecraft_version}"],"loaders":["forge"],"project_id":"${projectId}","changelog":"${changelog}","dependencies":[],"file_parts":["file"],"primary_file":"file"}"""
+        exec {
+            commandLine 'curl', '--fail', '-s', '-X', 'POST',
+                    'https://api.modrinth.com/v2/version',
+                    '-H', "Authorization: ${token}",
+                    '-F', "data=${data}",
+                    '-F', "file=@${jarPath}"
         }
     }
 }

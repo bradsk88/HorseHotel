@@ -23,3 +23,6 @@ run
 
 # Files from Forge MDK
 forge*changelog.txt
+
+# Secrets for publishing (MODRINTH_TOKEN, MODRINTH_PROJECT_ID)
+.env
