@@ -34,7 +34,8 @@ public final class Stock {
 
     /**
      * Discards any existing Stock and rolls a fresh assortment: a new count in
-     * {@code 0..maxForSale} and new {@link #rollHorse plain horses}.
+     * {@code 1..maxForSale} (never empty when {@code maxForSale >= 1}) and new
+     * {@link #rollHorse plain horses}.
      */
     public static void restock(
             ServerLevel level,
@@ -43,7 +44,8 @@ public final class Stock {
             int maxForSale
     ) {
         RandomSource rand = level.getRandom();
-        int n = maxForSale <= 0 ? 0 : rand.nextInt(maxForSale + 1);
+        // Always keep at least one horse for sale so a stable is never a dead end; roll 1..maxForSale.
+        int n = maxForSale <= 0 ? 0 : 1 + rand.nextInt(maxForSale);
         setStock(level, attendantData, near, n);
     }
 

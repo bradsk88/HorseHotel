@@ -5,6 +5,7 @@ import ca.bradj.horsehotel.network.UIStockHorse;
 import com.google.common.collect.ImmutableList;
 import com.mojang.blaze3d.vertex.PoseStack;
 import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.renderer.Rect2i;
 import net.minecraft.core.BlockPos;
@@ -75,6 +76,21 @@ public class StockScreen extends Screen {
     protected void init() {
         super.init();
         this.delegate.afterInit(this::addRenderableWidget);
+
+        // Mirror the "What is this?" link from the Your Horses tab so a player browsing the for-sale
+        // list — who may have no registered horses yet — can still learn about the stable network.
+        int pageTopY = ((this.height - delegate.backgroundHeight)) / 2;
+        int pageLeftX = ((this.width - PagedCardScreen.backgroundWidth) / 2);
+        int buttonHeight = (2 * font.lineHeight) + 2;
+        int buttonWidth = (PagedCardScreen.backgroundWidth - (2 * BIG_PADDING));
+        this.addRenderableWidget(new Button(
+                pageLeftX + BIG_PADDING,
+                pageTopY + delegate.backgroundHeight - buttonHeight - BIG_PADDING,
+                buttonWidth,
+                buttonHeight,
+                Compat.translatable("horsehotel.menus.common.what_is_this"),
+                (b) -> Minecraft.getInstance().setScreen(new WelcomeScreen())
+        ));
     }
 
     @Override

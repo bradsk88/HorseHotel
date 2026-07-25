@@ -37,6 +37,7 @@ public class PurchaseScreen extends Screen {
     private final BlockPos stablePos;
     private final Horse element;
     private final JEI.NineNine background;
+    private Button helpButton;
     // Questown's confirm screens use the standard 176-wide recipe background; 300 was too wide for
     // the short prompt and left the content looking stranded.
     private final int backgroundWidth = 176;
@@ -83,27 +84,38 @@ public class PurchaseScreen extends Screen {
         int pageTopY = ((this.height - backgroundHeight)) / 2;
         int pageLeftX = ((this.width - backgroundWidth) / 2);
         int buttonHeight = (2 * font.lineHeight) + 2;
+        // Bottom row: Buy and Close split the width.
         int buttonWidth = (backgroundWidth - (3 * BIG_PADDING)) / 2;
+        int rowY = pageTopY + backgroundHeight - buttonHeight - BIG_PADDING;
         this.addRenderableWidget(
                 new Button(
-                        pageLeftX + BIG_PADDING,
-                        pageTopY + backgroundHeight - buttonHeight - BIG_PADDING,
-                        buttonWidth,
-                        buttonHeight,
+                        pageLeftX + BIG_PADDING, rowY, buttonWidth, buttonHeight,
                         Compat.translatable("horsehotel.menus.purchase.buy"),
                         (b) -> this.buy()
                 )
         );
         this.addRenderableWidget(
                 new Button(
-                        pageLeftX + BIG_PADDING + buttonWidth + BIG_PADDING,
-                        pageTopY + backgroundHeight - buttonHeight - BIG_PADDING,
-                        buttonWidth,
-                        buttonHeight,
+                        pageLeftX + BIG_PADDING + buttonWidth + BIG_PADDING, rowY, buttonWidth, buttonHeight,
                         Compat.translatable("horsehotel.menus.common.close"),
                         (b) -> ClientAccess.closeScreens()
                 )
         );
+        // A "?" help icon tucked into the top-right corner, beside the horse. A player whose first
+        // interaction is right-clicking a for-sale horse skips the For Sale list (and its link), so
+        // surface the same network explainer here. Its tooltip is drawn at the end of render().
+        // Full 20px button height (buttonHeight == 2*lineHeight+2) — the widget texture is 20px
+        // tall, so a shorter button would clip its bottom outline.
+        int helpSize = buttonHeight;
+        int cornerInset = 4;
+        this.helpButton = new Button(
+                pageLeftX + backgroundWidth - helpSize - cornerInset,
+                pageTopY + cornerInset,
+                helpSize, helpSize,
+                Compat.literal("?"),
+                (b) -> Minecraft.getInstance().setScreen(new WelcomeScreen())
+        );
+        this.addRenderableWidget(this.helpButton);
     }
 
     private void buy() {
@@ -146,6 +158,11 @@ public class PurchaseScreen extends Screen {
             int lineX = bgX + (backgroundWidth - font.width(line)) / 2;
             Compat.drawDarkText(font, stack, line, lineX, textY);
             textY += (int) (font.lineHeight * 1.5f);
+        }
+
+        // Drawn last so the "?" tooltip renders above the horse and prompt text.
+        if (this.helpButton != null && this.helpButton.isMouseOver(mouseX, mouseY)) {
+            this.renderTooltip(stack, Compat.translatable("horsehotel.menus.common.what_is_this"), mouseX, mouseY);
         }
     }
 

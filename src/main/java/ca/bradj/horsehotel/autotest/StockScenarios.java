@@ -120,7 +120,7 @@ public final class StockScenarios {
         }
     }
 
-    /** An Attendant rolls Stock within {@code 0..maxHorsesForSale} on its first tick, and sets a deadline. */
+    /** An Attendant rolls Stock within {@code 1..maxHorsesForSale} on its first tick, and sets a deadline. */
     private static class StockGeneration extends StockScenario {
         StockGeneration(BlockPos home) {
             super(home);
@@ -133,7 +133,7 @@ public final class StockScenarios {
 
         @Override
         public String expectation() {
-            return "an attendant rolls a for-sale count within [0, maxHorsesForSale] and sets a restock deadline";
+            return "an attendant rolls a for-sale count within [1, maxHorsesForSale] and sets a restock deadline";
         }
 
         @Override
@@ -151,8 +151,8 @@ public final class StockScenarios {
                 return "attendant never set a restock deadline, so it never rolled its stock";
             }
             int size = Stock.size(ad);
-            if (size < 0 || size > Config.maxHorsesForSale) {
-                return String.format("stock size %d is outside [0, %d]", size, Config.maxHorsesForSale);
+            if (size < 1 || size > Config.maxHorsesForSale) {
+                return String.format("stock size %d is outside [1, %d]", size, Config.maxHorsesForSale);
             }
             return null;
         }
