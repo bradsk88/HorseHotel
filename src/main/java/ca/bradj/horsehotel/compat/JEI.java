@@ -1,12 +1,12 @@
 package ca.bradj.horsehotel.compat;
 
-import com.mojang.blaze3d.vertex.PoseStack;
 import mezz.jei.api.gui.drawable.IDrawable;
 import mezz.jei.api.gui.drawable.IDrawableStatic;
 import mezz.jei.common.Internal;
 import mezz.jei.common.gui.elements.DrawableNineSliceTexture;
-import mezz.jei.gui.elements.GuiIconButtonSmall;
+import mezz.jei.gui.elements.GuiIconButton;
 import mezz.jei.gui.input.MouseUtil;
+import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.Button;
 
 public class JEI {
@@ -38,11 +38,12 @@ public class JEI {
         return Internal.getTextures().getRecipeTransfer();
     }
 
-    public static GuiIconButtonSmall guiIconButtonSmall(
+    public static GuiIconButton guiIconButtonSmall(
             int x, int y, int widthIn, int heightIn, IDrawable icon, Button.OnPress pressable
     ) {
-        return new GuiIconButtonSmall(
-                x, y, widthIn, heightIn, icon, pressable, Internal.getTextures()
+        // 1.20.1: GuiIconButtonSmall became GuiIconButton and dropped the TextureAtlasSprite arg.
+        return new GuiIconButton(
+                x, y, widthIn, heightIn, icon, pressable
         );
     }
 
@@ -54,7 +55,7 @@ public class JEI {
     }
 
     public static IDrawableStatic getSlotDrawable() {
-        return Internal.getTextures().getSlotDrawable();
+        return Internal.getTextures().getSlot();
     }
 
     public static class NineNine {
@@ -65,8 +66,9 @@ public class JEI {
             this.delegate = input;
         }
 
-        public void draw(PoseStack stack, int x, int y, int backgroundWidth, int backgroundHeight) {
-            this.delegate.draw(stack, x, y, backgroundWidth, backgroundHeight);
+        public void draw(GuiGraphics gui, int x, int y, int backgroundWidth, int backgroundHeight) {
+            // 1.20.1: DrawableNineSliceTexture.draw takes GuiGraphics + position + w/h.
+            this.delegate.draw(gui, x, y, backgroundWidth, backgroundHeight);
         }
     }
 }

@@ -8,10 +8,9 @@ import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.EntityBlock;
+import net.minecraft.world.level.block.state.BlockBehaviour;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
-import net.minecraft.world.level.material.Material;
-import net.minecraft.world.level.material.MaterialColor;
 import net.minecraft.world.phys.BlockHitResult;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -23,7 +22,7 @@ public class RegisterBlock extends Block implements EntityBlock {
     public static final String ID = "register_block";
 
     public RegisterBlock() {
-        super(Properties.of(Material.GLASS, MaterialColor.TERRACOTTA_BROWN).strength(1.0F, 10.0F).noOcclusion());
+        super(BlockBehaviour.Properties.of().strength(1.0F, 10.0F).noOcclusion());
     }
 
     @Override

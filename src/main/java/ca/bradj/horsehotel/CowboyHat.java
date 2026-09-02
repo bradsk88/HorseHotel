@@ -1,7 +1,6 @@
 package ca.bradj.horsehotel;
 
 import net.minecraft.client.model.HumanoidModel;
-import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EquipmentSlot;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.item.ArmorItem;
@@ -9,17 +8,16 @@ import net.minecraft.world.item.ArmorMaterials;
 import net.minecraft.world.item.ItemStack;
 import net.minecraftforge.client.extensions.common.IClientItemExtensions;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.function.Consumer;
 
 public class CowboyHat extends ArmorItem {
 
     public static final String ITEM_ID = "cowboy_hat";
-    private static final Properties PROPS = new Properties().tab(ca.bradj.horsehotel.ModItemGroup.HORSEHOTEL_GROUP);
+    private static final Properties PROPS = new Properties();
 
     public CowboyHat() {
-        super(ArmorMaterials.LEATHER, EquipmentSlot.HEAD, PROPS);
+        super(ArmorMaterials.LEATHER, ArmorItem.Type.HELMET, PROPS);
     }
 
     @Override
@@ -38,16 +36,5 @@ public class CowboyHat extends ArmorItem {
                 return null;
             }
         });
-    }
-
-    @Nullable
-    @Override
-    public String getArmorTexture(
-            ItemStack stack,
-            Entity entity,
-            EquipmentSlot slot,
-            String type
-    ) {
-        return "horsehotel:textures/model/hat.png";
     }
 }

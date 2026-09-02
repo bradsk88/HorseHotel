@@ -45,7 +45,7 @@ public class SetWalkTargetFromBlockMemoro extends Behavior<StableAttendant> {
                Vec3 vec3 = null;
                int i = 0;
 
-               for(int j = 1000; i < 1000 && (vec3 == null || this.tooFar(p_24060_, GlobalPos.of(p_24059_.dimension(), new BlockPos(vec3)))); ++i) {
+               for(int j = 1000; i < 1000 && (vec3 == null || this.tooFar(p_24060_, GlobalPos.of(p_24059_.dimension(), new BlockPos((int)vec3.x, (int)vec3.y, (int)vec3.z)))); ++i) {
                   vec3 = DefaultRandomPos.getPosTowards(p_24060_, 15, 7, Vec3.atBottomCenterOf(p_24067_.pos()), (double)((float)Math.PI / 2F));
                }
 

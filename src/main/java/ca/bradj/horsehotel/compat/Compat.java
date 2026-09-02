@@ -1,7 +1,10 @@
 package ca.bradj.horsehotel.compat;
 
-import com.mojang.blaze3d.vertex.PoseStack;
-import net.minecraft.client.gui.Font;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.components.Button;
+import net.minecraft.client.gui.screens.inventory.tooltip.ClientTooltipPositioner;
+import org.joml.Vector2i;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.network.FriendlyByteBuf;
@@ -157,7 +160,7 @@ public class Compat {
         if (inserted.getOrCreateTag().isEmpty()) {
             for (int i = 0; i < iItemHandler.getSlots(); i++) {
                 ItemStack stackInSlot = iItemHandler.getStackInSlot(i);
-                if (stackInSlot.getOrCreateTag().isEmpty() && stackInSlot.sameItem(inserted)) {
+                if (stackInSlot.getOrCreateTag().isEmpty() && stackInSlot.is(inserted.getItem())) {
                     if (stackInSlot.getCount() < targetSize) {
                         iItemHandler.insertItem(i, inserted, false);
                         return true;
@@ -176,33 +179,123 @@ public class Compat {
     }
 
     public static void drawDarkText(
-            Font font,
-            PoseStack stack,
+            GuiGraphics gui,
             FormattedCharSequence translatable,
             int x,
             int y
     ) {
-        font.draw(stack, translatable, x, y, 0x00000000);
+        gui.drawString(font(), translatable, x, y, 0x00000000);
     }
 
     public static void drawDarkText(
-            Font font,
-            PoseStack stack,
+            GuiGraphics gui,
             Component translatable,
             int x,
             int y
     ) {
-        font.draw(stack, translatable, x, y, 0x00000000);
+        gui.drawString(font(), translatable, x, y, 0x00000000);
     }
 
     public static void drawLightText(
-            Font font,
-            PoseStack stack,
+            GuiGraphics gui,
             String translatable,
             int x,
             int y
     ) {
-        font.drawShadow(stack, translatable, x, y, 0xFFFFFFFF);
+        // No drawStringWithShadow in 1.20; shadow is the trailing boolean.
+        gui.drawString(font(), translatable, x, y, 0xFFFFFFFF, true);
+    }
+
+    /**
+     * Replaces the removed {@code GuiComponent.blit}: blit a sprite region from a texture.
+     * 1.19.2 signature order (x, y, width, height, u, v, uScale, vScale, maxU, maxV) is kept at
+     * the call site and mapped to the 1.20 {@code GuiGraphics.blit} ordering.
+     */
+    public static void blit(
+            GuiGraphics gui,
+            ResourceLocation texture,
+            int x,
+            int y,
+            int width,
+            int height,
+            int u,
+            int v,
+            int uScale,
+            int vScale,
+            int maxU,
+            int maxV
+    ) {
+        gui.blit(texture, x, y, u, v, uScale, vScale, width, height, maxU, maxV);
+    }
+
+    /**
+     * Replaces the removed {@code GuiComponent.fill}.
+     */
+    public static void fill(
+            GuiGraphics gui,
+            int x,
+            int y,
+            int width,
+            int height,
+            int color
+    ) {
+        gui.fill(x, y, x + width, y + height, color);
+    }
+
+    public static net.minecraft.client.gui.Font font() {
+        return Minecraft.getInstance().font;
+    }
+
+    /**
+     * Default button narration. The 1.19.2 {@code Button::createDefaultNarration} method reference
+     * is not a {@code CreateNarration} in 1.20.1 (the type changed to a message-supplier mapper and
+     * the default became a protected field), so the version-specific bit lives here and call sites
+     * pass this instead of the reference.
+     */
+    public static Button.CreateNarration defaultButtonNarration() {
+        return messageSupplier -> messageSupplier.get();
+    }
+
+    /**
+     * Build a {@link Button}. The 1.19.2 seven-arg {@code Button} constructor became protected in
+     * 1.20.1, so call sites route through this instead of {@code new Button(...)}. The default
+     * narration (see {@link #defaultButtonNarration()}) is applied here, keeping the version-specific
+     * builder + narration out of the call sites.
+     */
+    public static Button button(
+            int x,
+            int y,
+            int width,
+            int height,
+            Component message,
+            Button.OnPress onPress
+    ) {
+        return Button.builder(message, onPress)
+                .bounds(x, y, width, height)
+                .createNarration(defaultButtonNarration())
+                .build();
+    }
+
+    /**
+     * Default tooltip positioner. In 1.19.2 {@code ClientTooltipPositioner} was an abstract class
+     * whose empty {@code new ...() {}} gave a usable default; in 1.20.1 it is a functional interface
+     * that must be implemented, so the version-specific bit lives here. Positions the tooltip offset
+     * from the cursor, matching the old single-line tooltip behaviour.
+     */
+    public static ClientTooltipPositioner defaultTooltipPositioner() {
+        return (x, y, x2, y2, mouseX, mouseY) -> new Vector2i(mouseX + 12, mouseY + 12);
+    }
+
+    /**
+     * A damage source for the 1-point "you shouldn't have that" punishment. The 1.19.2
+     * {@code DamageSource.ANVIL} constant has no 1.20.1 equivalent (damage sources moved to the
+     * per-server {@code DamageSources} registry), so the version-specific bit lives here. Falls back
+     * to the generic fall source, which is the nearest common punishment source in 1.20.1.
+     */
+    public static net.minecraft.world.damagesource.DamageSource anvilDamageSource(
+            net.minecraft.world.level.Level level
+    ) {
+        return level.damageSources().fall();
     }
 
     public static Component getItemName(Item item) {
@@ -234,5 +327,5 @@ public class Compat {
     ) {
         sender.sendSystemMessage(message);
     }
-
 }
+

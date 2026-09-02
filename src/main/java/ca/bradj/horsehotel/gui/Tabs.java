@@ -2,10 +2,10 @@ package ca.bradj.horsehotel.gui;
 
 import ca.bradj.horsehotel.compat.JEI;
 import com.google.common.collect.ImmutableList;
-import com.mojang.blaze3d.vertex.PoseStack;
-import mezz.jei.api.gui.drawable.IDrawableStatic;
 import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.renderer.entity.ItemRenderer;
+import mezz.jei.api.gui.drawable.IDrawableStatic;
 
 import java.util.function.Consumer;
 
@@ -46,17 +46,17 @@ public class Tabs {
     }
 
     public void draw(
-            PoseStack stack,
+            GuiGraphics gui,
             int bgX,
             int bgY
     ) {
         ItemRenderer itemRenderer = Minecraft.getInstance().getItemRenderer();
-        RenderContext rc = new RenderContext(itemRenderer, stack);
+        RenderContext rc = new RenderContext(itemRenderer, gui);
         for (int i = 0; i < tabs.size(); i++) {
             IDrawableStatic drawable = tabs.get(i).selected() ? this.tab : this.unTab;
             int tabX = bgX + (drawable.getWidth() * i);
             int tabY = bgY - drawable.getHeight();
-            drawable.draw(stack, tabX + X_OFFSET, tabY + Y_OFFSET);
+            drawable.draw(gui, tabX + X_OFFSET, tabY + Y_OFFSET);
             // Hand the icon the centre of the drawn tab face, so icons centre themselves regardless
             // of their own size.
             int centerX = tabX + X_OFFSET + drawable.getWidth() / 2;

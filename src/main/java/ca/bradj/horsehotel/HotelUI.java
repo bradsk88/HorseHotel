@@ -29,7 +29,7 @@ public class HotelUI {
             BlockPos stablePos,
             String tab
     ) {
-        ServerLevel sl = sp.getLevel();
+        ServerLevel sl = sp.serverLevel();
         @Nullable StableAttendant att = StableAttendant.findNearest(sl, stablePos, Config.horseEvalRadius);
         boolean stockAvailable = att != null && !Stock.isEmpty(HHNBT.getPersistentData(att));
 

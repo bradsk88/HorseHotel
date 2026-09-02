@@ -4,6 +4,7 @@ import com.mojang.datafixers.util.Pair;
 import net.minecraft.core.Holder;
 import net.minecraft.core.Registry;
 import net.minecraft.core.RegistryAccess;
+import net.minecraft.core.registries.Registries;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.level.levelgen.structure.pools.StructurePoolElement;
@@ -43,12 +44,12 @@ public class VillageStables {
     public static void addStableToVillages(ServerAboutToStartEvent event) {
         RegistryAccess registries = event.getServer().registryAccess();
         Registry<StructureTemplatePool> pools =
-                registries.registryOrThrow(Registry.TEMPLATE_POOL_REGISTRY);
+                registries.registryOrThrow(Registries.TEMPLATE_POOL);
         Registry<StructureProcessorList> processors =
-                registries.registryOrThrow(Registry.PROCESSOR_LIST_REGISTRY);
+                registries.registryOrThrow(Registries.PROCESSOR_LIST);
 
         Holder<StructureProcessorList> emptyProcessors = processors.getHolderOrThrow(
-                ResourceKey.create(Registry.PROCESSOR_LIST_REGISTRY,
+                ResourceKey.create(Registries.PROCESSOR_LIST,
                         new ResourceLocation("minecraft", "empty")));
 
         for (String type : VILLAGE_TYPES) {

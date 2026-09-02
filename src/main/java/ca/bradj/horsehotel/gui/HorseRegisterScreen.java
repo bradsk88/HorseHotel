@@ -5,8 +5,8 @@ import ca.bradj.horsehotel.compat.JEI;
 import ca.bradj.horsehotel.network.HHNetwork;
 import ca.bradj.horsehotel.network.RegisterRiddenHorseMessage;
 import com.google.common.collect.ImmutableList;
-import com.mojang.blaze3d.vertex.PoseStack;
 import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.renderer.Rect2i;
@@ -75,7 +75,7 @@ public class HorseRegisterScreen extends Screen {
         int buttonHeight = (2 * font.lineHeight) + 2;
         int buttonWidth = (backgroundWidth - (3 * BIG_PADDING)) / 2;
         this.addRenderableWidget(
-                new Button(
+                Compat.button(
                         pageLeftX + BIG_PADDING,
                         pageTopY + backgroundHeight - buttonHeight - BIG_PADDING,
                         buttonWidth,
@@ -85,7 +85,7 @@ public class HorseRegisterScreen extends Screen {
                 )
         );
         this.addRenderableWidget(
-                new Button(
+                Compat.button(
                         pageLeftX + BIG_PADDING + buttonWidth + BIG_PADDING,
                         pageTopY + backgroundHeight - buttonHeight - BIG_PADDING,
                         buttonWidth,
@@ -104,24 +104,24 @@ public class HorseRegisterScreen extends Screen {
 
     @Override
     public void render(
-            PoseStack stack,
+            GuiGraphics gui,
             int mouseX,
             int mouseY,
             float partialTicks
     ) {
-        this.renderBackground(stack);
+        this.renderBackground(gui);
 
         int bgX = (this.width - backgroundWidth) / 2;
         int bgY = (this.height - backgroundHeight) / 2;
-        this.background.draw(stack, bgX, bgY, backgroundWidth, backgroundHeight);
-        super.render(stack, mouseX, mouseY, partialTicks);
+        this.background.draw(gui, bgX, bgY, backgroundWidth, backgroundHeight);
+        super.render(gui, mouseX, mouseY, partialTicks);
 
         int horseSize = 32;
         int arbitraryNudge = 10;
         int horseX = bgX + arbitraryNudge + (backgroundWidth - horseSize) / 2;
         int horseY = bgY + horseSize + BIG_PADDING;
 
-        renderEntity(element, stack, horseX, horseY, horseSize);
+        renderEntity(element, gui, horseX, horseY, horseSize);
 
         int textX = bgX + MED_PADDING;
         int textY = horseY + horseSize + BIG_PADDING;
@@ -132,9 +132,9 @@ public class HorseRegisterScreen extends Screen {
         Component t2 = Compat.translatable("horsehotel.menus.register_horse.your_horse_will_be_kept_in_stable");
         Component t3 = Compat.translatable("horsehotel.menus.register_horse.also_other_stables");
 
-        Compat.drawDarkText(font, stack, t1, textX, textY);
-        Compat.drawDarkText(font, stack, t2, textX, textY += (int) (font.lineHeight * 1.75f));
-        Compat.drawDarkText(font, stack, t3, textX, textY += (int) (font.lineHeight * 1.75f));
+        Compat.drawDarkText(gui, t1, textX, textY);
+        Compat.drawDarkText(gui, t2, textX, textY += (int) (font.lineHeight * 1.75f));
+        Compat.drawDarkText(gui, t3, textX, textY += (int) (font.lineHeight * 1.75f));
     }
 
     @Override

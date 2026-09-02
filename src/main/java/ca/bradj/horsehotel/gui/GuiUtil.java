@@ -3,8 +3,8 @@ package ca.bradj.horsehotel.gui;
 import ca.bradj.horsehotel.HorseHotel;
 import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.vertex.PoseStack;
-import com.mojang.math.Vector3f;
 import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.entity.EntityRenderDispatcher;
 import net.minecraft.world.entity.Entity;
@@ -40,17 +40,19 @@ public class GuiUtil {
 
     public static void renderEntity(
             Entity entity,
-            PoseStack matrixStack,
+            GuiGraphics gui,
             int xPos,
             int yPos,
             float scale
     ) {
+        PoseStack matrixStack = gui.pose();
         matrixStack.pushPose();
         RenderSystem.setShaderColor(1f, 1f, 1f, 1f);
         matrixStack.translate(xPos + 8, yPos + 24, 50F);
         matrixStack.scale(-scale, scale, scale);
-        matrixStack.mulPose(Vector3f.ZP.rotationDegrees(180));
-        matrixStack.mulPose(Vector3f.XP.rotationDegrees(0));
+        // 1.19.2 used com.mojang.math.Vector3f.{ZP,XP}.rotationDegrees; in 1.20.1 PoseStack takes a
+        // joml Quaternionf. A 180° turn about Z is (0,0,1,0); the old 0° X rotation was a no-op.
+        matrixStack.mulPose(new org.joml.Quaternionf(0, 0, 1, 0));
 
         EntityRenderDispatcher dispatcher = Minecraft.getInstance().getEntityRenderDispatcher();
         try {

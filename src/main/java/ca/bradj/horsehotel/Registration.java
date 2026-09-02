@@ -74,7 +74,7 @@ public class Registration {
         if (!(veh instanceof Horse vh)) {
             return false;
         }
-        CompoundTag data = updateDataToFullHealth(player.getLevel(), vh.serializeNBT());
+        CompoundTag data = updateDataToFullHealth(player.serverLevel(), vh.serializeNBT());
         HHNBT nhd = new HHNBT(() -> data);
         nhd.put(HHNBT.Key.ARMOR_ITEM, vh.getArmor().serializeNBT());
         LOGGER.debug("Horse: {}", data);

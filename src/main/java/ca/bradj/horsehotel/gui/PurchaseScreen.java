@@ -5,8 +5,8 @@ import ca.bradj.horsehotel.compat.JEI;
 import ca.bradj.horsehotel.network.HHNetwork;
 import ca.bradj.horsehotel.network.PurchaseHorseMessage;
 import com.google.common.collect.ImmutableList;
-import com.mojang.blaze3d.vertex.PoseStack;
 import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.core.BlockPos;
@@ -88,14 +88,14 @@ public class PurchaseScreen extends Screen {
         int buttonWidth = (backgroundWidth - (3 * BIG_PADDING)) / 2;
         int rowY = pageTopY + backgroundHeight - buttonHeight - BIG_PADDING;
         this.addRenderableWidget(
-                new Button(
+                Compat.button(
                         pageLeftX + BIG_PADDING, rowY, buttonWidth, buttonHeight,
                         Compat.translatable("horsehotel.menus.purchase.buy"),
                         (b) -> this.buy()
                 )
         );
         this.addRenderableWidget(
-                new Button(
+                Compat.button(
                         pageLeftX + BIG_PADDING + buttonWidth + BIG_PADDING, rowY, buttonWidth, buttonHeight,
                         Compat.translatable("horsehotel.menus.common.close"),
                         (b) -> ClientAccess.closeScreens()
@@ -108,7 +108,7 @@ public class PurchaseScreen extends Screen {
         // tall, so a shorter button would clip its bottom outline.
         int helpSize = buttonHeight;
         int cornerInset = 4;
-        this.helpButton = new Button(
+        this.helpButton = Compat.button(
                 pageLeftX + backgroundWidth - helpSize - cornerInset,
                 pageTopY + cornerInset,
                 helpSize, helpSize,
@@ -125,24 +125,24 @@ public class PurchaseScreen extends Screen {
 
     @Override
     public void render(
-            PoseStack stack,
+            GuiGraphics gui,
             int mouseX,
             int mouseY,
             float partialTicks
     ) {
-        this.renderBackground(stack);
+        this.renderBackground(gui);
 
         int bgX = (this.width - backgroundWidth) / 2;
         int bgY = (this.height - backgroundHeight) / 2;
-        this.background.draw(stack, bgX, bgY, backgroundWidth, backgroundHeight);
-        super.render(stack, mouseX, mouseY, partialTicks);
+        this.background.draw(gui, bgX, bgY, backgroundWidth, backgroundHeight);
+        super.render(gui, mouseX, mouseY, partialTicks);
 
         int horseSize = 32;
         // Centre the horse in the background. renderEntity draws the horse around xPos + 8.
         int horseX = bgX + (backgroundWidth / 2) - 8;
         int horseY = bgY + horseSize + BIG_PADDING;
 
-        renderEntity(element, stack, horseX, horseY, horseSize);
+        renderEntity(element, gui, horseX, horseY, horseSize);
 
         MutableComponent unnamed = Component.translatable("horsehotel.menus.common.this_horse");
         Component name = element.getCustomName() == null ? unnamed : element.getCustomName();
@@ -156,13 +156,17 @@ public class PurchaseScreen extends Screen {
         lines.addAll(font.split(t2, textWidth));
         for (FormattedCharSequence line : lines) {
             int lineX = bgX + (backgroundWidth - font.width(line)) / 2;
-            Compat.drawDarkText(font, stack, line, lineX, textY);
+            Compat.drawDarkText(gui, line, lineX, textY);
             textY += (int) (font.lineHeight * 1.5f);
         }
 
         // Drawn last so the "?" tooltip renders above the horse and prompt text.
         if (this.helpButton != null && this.helpButton.isMouseOver(mouseX, mouseY)) {
-            this.renderTooltip(stack, Compat.translatable("horsehotel.menus.common.what_is_this"), mouseX, mouseY);
+            this.setTooltipForNextRenderPass(
+                    java.util.List.of(Compat.translatable("horsehotel.menus.common.what_is_this").getVisualOrderText()),
+                    Compat.defaultTooltipPositioner(),
+                    false
+            );
         }
     }
 

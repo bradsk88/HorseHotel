@@ -38,7 +38,7 @@ public class Purchasing {
             UUID stockUuid,
             BlockPos stablePos
     ) {
-        ServerLevel sl = sp.getLevel();
+        ServerLevel sl = sp.serverLevel();
         double radius = Config.horseEvalRadius;
 
         StableAttendant att = StableAttendant.findNearest(sl, stablePos, radius);

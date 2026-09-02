@@ -4,14 +4,12 @@ import ca.bradj.horsehotel.compat.Compat;
 import ca.bradj.horsehotel.compat.JEI;
 import com.google.common.collect.ImmutableList;
 import com.mojang.blaze3d.systems.RenderSystem;
-import com.mojang.blaze3d.vertex.PoseStack;
 import mezz.jei.api.gui.drawable.IDrawableStatic;
 import mezz.jei.common.util.ImmutableRect2i;
 import mezz.jei.common.util.MathUtil;
-import mezz.jei.gui.elements.GuiIconButtonSmall;
+import mezz.jei.gui.elements.GuiIconButton;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.Font;
-import net.minecraft.client.gui.GuiComponent;
+import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.renderer.Rect2i;
 import org.apache.logging.log4j.util.TriConsumer;
 import org.jetbrains.annotations.NotNull;
@@ -37,11 +35,11 @@ public final class PagedCardScreen<D> {
     private final Supplier<Integer> height;
     private final Supplier<Integer> width;
     private final JEI.NineNine background;
-    final GuiIconButtonSmall nextPage;
-    final GuiIconButtonSmall previousPage;
+    final GuiIconButton nextPage;
+    final GuiIconButton previousPage;
     private final JEI.NineNine cardBackground;
     private final Consumer<D> setRenderColorForCard;
-    private final TriConsumer<PoseStack, Card<D>, Coordinate> renderCardContent;
+    private final TriConsumer<GuiGraphics, Card<D>, Coordinate> renderCardContent;
     private final Supplier<List<D>> cardsData;
     private final int MAX_CARDS_PER_PAGE;
     public final int cardHeight;
@@ -53,7 +51,7 @@ public final class PagedCardScreen<D> {
             Supplier<Integer> width,
             Supplier<List<D>> cardsData,
             Consumer<D> setRenderColorForCard,
-            TriConsumer<PoseStack, Card<D>, Coordinate> renderCardContent,
+            TriConsumer<GuiGraphics, Card<D>, Coordinate> renderCardContent,
             // TODO: Replace Pair with Coordinate
             int heightScale,
             int buttonY,
@@ -130,67 +128,60 @@ public final class PagedCardScreen<D> {
     }
 
     protected void afterInit(
-            Consumer<GuiIconButtonSmall> addRenderableWidget
+            Consumer<GuiIconButton> addRenderableWidget
     ) {
         int y = (this.height.get() - backgroundHeight) / 2;
         int pageStringY = y + borderPadding;
         int x = ((this.width.get() - backgroundWidth) / 2);
-        this.previousPage.x = x + borderPadding;
-        this.previousPage.y = pageStringY + buttonY;
-        this.nextPage.x = x + backgroundWidth - buttonWidth - borderPadding;
-        this.nextPage.y = pageStringY + buttonY;
+        // 1.20.1 GuiIconButton has no setPos; position via updateBounds (x, y, w, h).
+        this.previousPage.updateBounds(new Rect2i(x + borderPadding, pageStringY + buttonY, buttonWidth, buttonHeight));
+        this.nextPage.updateBounds(new Rect2i(x + backgroundWidth - buttonWidth - borderPadding, pageStringY + buttonY, buttonWidth, buttonHeight));
         addRenderableWidget.accept(this.previousPage);
         addRenderableWidget.accept(this.nextPage);
     }
 
     protected void renderBg(
-            PoseStack stack,
-            float v,
-            int i,
-            int i1
+            GuiGraphics gui,
+            int mouseX,
+            int mouseY
     ) {
         int bgX = (this.width.get() - backgroundWidth) / 2;
         int bgY = (this.height.get() - backgroundHeight) / 2;
-        this.background.draw(stack, bgX, bgY, backgroundWidth, backgroundHeight);
+        this.background.draw(gui, bgX, bgY, backgroundWidth, backgroundHeight);
     }
 
     public void afterRender(
-            PoseStack poseStack,
-            Font font,
+            GuiGraphics gui,
             int mouseX,
             int mouseY,
-            float partialTicks,
             List<D> cardsData,
             boolean drawCardBg
     ) {
-        renderButtons(poseStack, font, mouseX, mouseY, partialTicks, cardsData);
-        renderCards(poseStack, mouseX, mouseY, drawCardBg);
+        renderButtons(gui, mouseX, mouseY, cardsData);
+        renderCards(gui, mouseX, mouseY, drawCardBg);
     }
 
     public void renderButtons(
-            PoseStack poseStack,
-            Font font,
+            GuiGraphics gui,
             int mouseX,
             int mouseY,
-            float partialTicks,
             List<D> cardsData
     ) {
         int bgX = (this.width.get() - backgroundWidth) / 2;
         renderPageNum(
-                poseStack,
-                font,
+                gui,
                 bgX,
                 cardsData,
-                (s, pos, size) -> GuiComponent.fill(poseStack, pos.x(), pos.y(), size.x(), size.y(), 0x30000000)
+                (s, pos, size) -> Compat.fill(s, pos.x(), pos.y(), size.x(), size.y(), 0x30000000)
         );
 
         // Render the page buttons
-        this.previousPage.render(poseStack, mouseX, mouseY, partialTicks);
-        this.nextPage.render(poseStack, mouseX, mouseY, partialTicks);
+        this.previousPage.render(gui, mouseX, mouseY, 1.0f);
+        this.nextPage.render(gui, mouseX, mouseY, 1.0f);
     }
 
     private void renderCards(
-            PoseStack poseStack,
+            GuiGraphics gui,
             int mouseX,
             int mouseY,
             boolean drawCardBg
@@ -200,10 +191,10 @@ public final class PagedCardScreen<D> {
                 setRenderColorForCard.accept(card.data());
                 int x2 = card.coords().leftX();
                 int y2 = card.coords().topY();
-                this.cardBackground.draw(poseStack, x2, y2, CARD_WIDTH, cardHeight);
+                this.cardBackground.draw(gui, x2, y2, CARD_WIDTH, cardHeight);
                 RenderSystem.setShaderColor(1.0f, 1.0f, 1.0f, 1.0f);
             }
-            renderCardContent.accept(poseStack, card, new Coordinate(mouseX, mouseY));
+            renderCardContent.accept(gui, card, new Coordinate(mouseX, mouseY));
         });
     }
 
@@ -219,24 +210,23 @@ public final class PagedCardScreen<D> {
     }
 
     private void renderPageNum(
-            PoseStack poseStack,
-            Font font,
+            GuiGraphics gui,
             int x,
             List<D> cardsData,
-            TriConsumer<PoseStack, Coordinate, Coordinate> fill
+            TriConsumer<GuiGraphics, Coordinate, Coordinate> fill
     ) {
         // Draw page numbers
         int xx = x + borderPadding + buttonWidth;
-        int y = nextPage.y;
+        int y = nextPage.getArea().getY();
         int width = xx + backgroundWidth - borderPadding - buttonWidth;
-        int height = nextPage.y + buttonHeight;
-        fill.accept(poseStack, new Coordinate(xx, y), new Coordinate(width, height));
+        int height = nextPage.getArea().getY() + buttonHeight;
+        fill.accept(gui, new Coordinate(xx, y), new Coordinate(width, height));
         int totalPages = (int) Math.ceil((double) cardsData.size() / MAX_CARDS_PER_PAGE);
         String pageString = "Page " + (currentPage + 1) + " / " + totalPages;
 
         ImmutableRect2i pageArea = MathUtil.union(previousPage.getArea(), nextPage.getArea());
-        ImmutableRect2i textArea = MathUtil.centerTextArea(pageArea, font, pageString);
-        Compat.drawLightText(font, poseStack, pageString, textArea.getX(), textArea.getY());
+        ImmutableRect2i textArea = MathUtil.centerTextArea(pageArea, Compat.font(), pageString);
+        Compat.drawLightText(gui, pageString, textArea.getX(), textArea.getY());
     }
 
     private void nextPage() {

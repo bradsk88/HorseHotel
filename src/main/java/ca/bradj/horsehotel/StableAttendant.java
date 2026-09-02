@@ -99,8 +99,8 @@ public class StableAttendant extends PathfinderMob {
     }
 
     public void releasePoi(MemoryModuleType<GlobalPos> p_35429_) {
-        if (this.level instanceof ServerLevel) {
-            MinecraftServer minecraftserver = ((ServerLevel) this.level).getServer();
+        if (this.level() instanceof ServerLevel) {
+            MinecraftServer minecraftserver = ((ServerLevel) this.level()).getServer();
             this.brain.getMemory(p_35429_).ifPresent((p_186306_) -> {
                 ServerLevel serverlevel = minecraftserver.getLevel(p_186306_.dimension());
                 if (serverlevel != null) {
@@ -140,7 +140,7 @@ public class StableAttendant extends PathfinderMob {
     @Override
     public void tick() {
         super.tick();
-        if (!(level instanceof ServerLevel sl)) {
+        if (!(level() instanceof ServerLevel sl)) {
             return;
         }
 
@@ -198,14 +198,14 @@ public class StableAttendant extends PathfinderMob {
     @Override
     public void startSleeping(BlockPos p_21141_) {
         super.startSleeping(p_21141_);
-        this.brain.setMemory(MemoryModuleType.LAST_SLEPT, this.level.getGameTime());
+        this.brain.setMemory(MemoryModuleType.LAST_SLEPT, this.level().getGameTime());
         this.brain.eraseMemory(MemoryModuleType.WALK_TARGET);
         this.brain.eraseMemory(MemoryModuleType.CANT_REACH_WALK_TARGET_SINCE);
     }
 
     public void stopSleeping() {
         super.stopSleeping();
-        this.brain.setMemory(MemoryModuleType.LAST_WOKEN, this.level.getGameTime());
+        this.brain.setMemory(MemoryModuleType.LAST_WOKEN, this.level().getGameTime());
     }
 
     public Brain<StableAttendant> getBrain() {
@@ -233,15 +233,15 @@ public class StableAttendant extends PathfinderMob {
         p_35425_.setCoreActivities(ImmutableSet.of(Activity.CORE));
         p_35425_.setDefaultActivity(Activity.IDLE);
         p_35425_.setActiveActivityIfPossible(Activity.IDLE);
-        p_35425_.updateActivityFromSchedule(this.level.getDayTime(), this.level.getGameTime());
+        p_35425_.updateActivityFromSchedule(this.level().getDayTime(), this.level().getGameTime());
     }
 
 
     @Override
     protected void customServerAiStep() {
-        this.level.getProfiler().push("villagerBrain");
-        this.getBrain().tick((ServerLevel) this.level, this);
-        this.level.getProfiler().pop();
+        this.level().getProfiler().push("villagerBrain");
+        this.getBrain().tick((ServerLevel) this.level(), this);
+        this.level().getProfiler().pop();
         super.customServerAiStep();
     }
 

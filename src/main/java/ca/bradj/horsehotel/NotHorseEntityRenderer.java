@@ -29,7 +29,7 @@ public class NotHorseEntityRenderer extends LivingEntityRenderer<NotHorseEntity,
                 p_114874_.put(Variant.BROWN, tex("horse_brown"));
                 p_114874_.put(Variant.BLACK, tex("horse_black"));
                 p_114874_.put(Variant.GRAY, tex("horse_gray"));
-                p_114874_.put(Variant.DARKBROWN, tex("horse_darkbrown"));
+                p_114874_.put(Variant.DARK_BROWN, tex("horse_darkbrown"));
             }
     );
 

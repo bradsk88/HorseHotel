@@ -5,8 +5,8 @@ import ca.bradj.horsehotel.network.HHNetwork;
 import ca.bradj.horsehotel.network.SummonHorseMessage;
 import ca.bradj.horsehotel.network.UIHorse;
 import com.google.common.collect.ImmutableList;
-import com.mojang.blaze3d.vertex.PoseStack;
 import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.renderer.Rect2i;
@@ -93,7 +93,7 @@ public class HorseSummonScreen extends Screen {
         int pageLeftX = ((this.width - PagedCardScreen.backgroundWidth) / 2);
         int buttonHeight = (2 * font.lineHeight) + 2;
         int buttonWidth = (PagedCardScreen.backgroundWidth - (2 * BIG_PADDING));
-        this.addRenderableWidget(new Button(
+        this.addRenderableWidget(Compat.button(
                 pageLeftX + BIG_PADDING,
                 pageTopY + delegate.backgroundHeight - buttonHeight - BIG_PADDING,
                 buttonWidth,
@@ -105,20 +105,19 @@ public class HorseSummonScreen extends Screen {
 
     @Override
     public void render(
-            PoseStack stack,
+            GuiGraphics gui,
             int mouseX,
             int mouseY,
             float partialTicks
     ) {
-        this.renderBackground(stack);
-        this.delegate.renderBg(stack, partialTicks, mouseX, mouseY);
+        this.delegate.renderBg(gui, mouseX, mouseY);
         int bgX = (this.width - PagedCardScreen.backgroundWidth) / 2;
         int bgY = (this.height - delegate.backgroundHeight) / 2;
-        this.tabs.draw(stack, bgX, bgY);
-        super.render(stack, mouseX, mouseY, partialTicks);
-        this.delegate.afterRender(stack, font, mouseX, mouseY, partialTicks, horses, true);
+        this.tabs.draw(gui, bgX, bgY);
+        super.render(gui, mouseX, mouseY, partialTicks);
+        this.delegate.afterRender(gui, mouseX, mouseY, horses, true);
         this.tabs.renderTooltip(bgX, bgY, mouseX, mouseY,
-                key -> this.renderTooltip(stack, Compat.translatable(key), mouseX, mouseY));
+                key -> this.setTooltipForNextRenderPass(java.util.List.of(Compat.translatable(key).getVisualOrderText()), Compat.defaultTooltipPositioner(), false));
     }
 
     @Override
@@ -161,17 +160,17 @@ public class HorseSummonScreen extends Screen {
     }
 
     private void renderCardContent(
-            PoseStack stack,
+            GuiGraphics gui,
             PagedCardScreen.Card<UIHorse> card,
             ca.bradj.horsehotel.gui.Coordinate mouse
     ) {
         PagedCardScreen.CardCoordinates c = card.coords();
-        renderEntity(entities.get(card.index()), stack, c.leftXPadded() + 10, c.topYPadded() + 4, 16);
+        renderEntity(entities.get(card.index()), gui, c.leftXPadded() + 10, c.topYPadded() + 4, 16);
         Component name = entities.get(card.index()).getCustomName();
         if (name == null) {
             name = Compat.translatable("horse");
         }
-        Compat.drawDarkText(font, stack, name, c.leftXPadded() + 35, c.topYPadded());
+        Compat.drawDarkText(gui, name, c.leftXPadded() + 35, c.topYPadded());
     }
 
     @Override

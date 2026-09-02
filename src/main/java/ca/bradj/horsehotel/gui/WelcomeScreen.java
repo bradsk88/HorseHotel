@@ -4,15 +4,13 @@ import ca.bradj.horsehotel.HorseHotel;
 import ca.bradj.horsehotel.compat.Compat;
 import com.google.common.collect.ImmutableList;
 import com.mojang.blaze3d.systems.RenderSystem;
-import com.mojang.blaze3d.vertex.PoseStack;
 import mezz.jei.common.util.ImmutableRect2i;
 import mezz.jei.common.util.MathUtil;
-import net.minecraft.client.gui.GuiComponent;
+import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.renderer.Rect2i;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
-import net.minecraft.util.FormattedCharSequence;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -84,15 +82,14 @@ public class WelcomeScreen extends Screen {
 
     @Override
     public void render(
-            PoseStack stack,
+            GuiGraphics gui,
             int mouseX,
             int mouseY,
             float partialTicks
     ) {
-        this.renderBackground(stack);
-        this.delegate.renderBg(stack, partialTicks, mouseX, mouseY);
-        super.render(stack, mouseX, mouseY, partialTicks);
-        this.delegate.afterRender(stack, font, mouseX, mouseY, partialTicks, PAGES, false);
+        this.delegate.renderBg(gui, mouseX, mouseY);
+        super.render(gui, mouseX, mouseY, partialTicks);
+        this.delegate.afterRender(gui, mouseX, mouseY, PAGES, false);
     }
 
     @Override
@@ -111,10 +108,11 @@ public class WelcomeScreen extends Screen {
     }
 
     private void renderCardContent(
-            PoseStack stack,
+            GuiGraphics gui,
             Card<WelcomePage> card,
             Coordinate mouse
     ) {
+        var font = Compat.font();
         PagedCardScreen.CardCoordinates c = card.coords();
         ImmutableList<TxKeyOrImage> content = card.data().content();
         int screenX = c.leftX();
@@ -130,8 +128,9 @@ public class WelcomeScreen extends Screen {
                 int heightOfEntireFile = renderHeight * 3;
                 int bgX = (width - renderWidth) / 2;
                 RenderSystem.setShaderTexture(0, ResourceLocation.tryBuild(HorseHotel.MODID, iContent.value()));
-                GuiComponent.blit(
-                        stack,
+                Compat.blit(
+                        gui,
+                        ResourceLocation.tryBuild(HorseHotel.MODID, iContent.value()),
                         bgX,
                         screenY,
                         renderWidth,
@@ -151,15 +150,15 @@ public class WelcomeScreen extends Screen {
             if (card.index() == 0 && i == 0) {
                 ImmutableRect2i pageArea = MathUtil.union(delegate.previousPage.getArea(), delegate.nextPage.getArea());
                 pageArea = pageArea.moveDown(font.lineHeight * 2);
-                ImmutableRect2i textArea = MathUtil.centerTextArea(pageArea, font, text);
-                Compat.drawDarkText(font, stack, text, textArea.getX(), textArea.getY());
+                ImmutableRect2i textArea = MathUtil.centerTextArea(pageArea, font, text.getString());
+                Compat.drawDarkText(gui, text, textArea.getX(), textArea.getY());
                 screenY += font.lineHeight;
                 continue;
             }
 
-            List<FormattedCharSequence> split = font.split(text, c.rightX() - c.leftX());
-            for (FormattedCharSequence t : split) {
-                Compat.drawDarkText(font, stack, t, screenX, screenY);
+            java.util.List<net.minecraft.util.FormattedCharSequence> split = font.split(text, c.rightX() - c.leftX());
+            for (var t : split) {
+                Compat.drawDarkText(gui, t, screenX, screenY);
                 screenY += (int) (font.lineHeight * 1.5);
             }
         }

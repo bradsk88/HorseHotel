@@ -1,12 +1,12 @@
 package ca.bradj.horsehotel.gui;
 
 import ca.bradj.horsehotel.HorseHotel;
+import ca.bradj.horsehotel.compat.Compat;
 import ca.bradj.horsehotel.network.HHNetwork;
 import ca.bradj.horsehotel.network.OpenHotelMessage;
 import com.google.common.collect.ImmutableList;
 import com.mojang.blaze3d.systems.RenderSystem;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.GuiComponent;
 import net.minecraft.client.gui.components.PlayerFaceRenderer;
 import net.minecraft.core.BlockPos;
 import net.minecraft.resources.ResourceLocation;
@@ -60,7 +60,7 @@ public class HotelTabs {
                         return;
                     }
                     RenderSystem.setShaderTexture(0, player.getSkinTextureLocation());
-                    PlayerFaceRenderer.draw(rc.stack(), cx - ICON_SIZE / 2, cy - ICON_SIZE / 2, ICON_SIZE);
+                    PlayerFaceRenderer.draw(rc.gui(), player.getSkinTextureLocation(), cx - ICON_SIZE / 2, cy - ICON_SIZE / 2, ICON_SIZE);
                 },
                 open(stablePos, OpenHotelMessage.YOUR_HORSES, selected),
                 "horsehotel.menus.tabs.your_horses",
@@ -75,7 +75,7 @@ public class HotelTabs {
         return new Tab(
                 (rc, cx, cy) -> {
                     RenderSystem.setShaderTexture(0, COWBOY_HAT);
-                    GuiComponent.blit(rc.stack(), cx - ICON_SIZE / 2, cy - ICON_SIZE / 2,
+                    Compat.blit(rc.gui(), COWBOY_HAT, cx - ICON_SIZE / 2, cy - ICON_SIZE / 2,
                             ICON_SIZE, ICON_SIZE, 0, 0, 16, 16, 16, 16);
                 },
                 open(stablePos, OpenHotelMessage.FOR_SALE, selected),

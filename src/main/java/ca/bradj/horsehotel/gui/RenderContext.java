@@ -1,6 +1,6 @@
 package ca.bradj.horsehotel.gui;
 
-import com.mojang.blaze3d.vertex.PoseStack;
+import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.renderer.entity.ItemRenderer;
 
 /**
@@ -8,6 +8,6 @@ import net.minecraft.client.renderer.entity.ItemRenderer;
  */
 public record RenderContext(
         ItemRenderer itemRenderer,
-        PoseStack stack
+        GuiGraphics gui
 ) {
 }

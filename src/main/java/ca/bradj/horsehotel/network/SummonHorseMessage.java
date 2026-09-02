@@ -29,7 +29,7 @@ public record SummonHorseMessage(
     ) {
         ctx.get().enqueueWork(() -> {
             ServerPlayer sender = ctx.get().getSender();
-            NotHorseEntity.respawnRealHorse(horseIndex(), sender.getOnPos(), sender, sender.getLevel());
+            NotHorseEntity.respawnRealHorse(horseIndex(), sender.getOnPos(), sender, sender.serverLevel());
         });
         ctx.get().setPacketHandled(true);
 

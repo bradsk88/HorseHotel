@@ -3,6 +3,8 @@ package ca.bradj.horsehotel;
 import ca.bradj.horsehotel.network.HHNetwork;
 import com.mojang.logging.LogUtils;
 import net.minecraft.client.renderer.entity.EntityRenderers;
+import net.minecraft.core.registries.Registries;
+import net.minecraft.world.item.CreativeModeTab;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraftforge.api.distmarker.Dist;
@@ -16,6 +18,7 @@ import net.minecraftforge.fml.config.ModConfig;
 import net.minecraftforge.fml.event.lifecycle.FMLClientSetupEvent;
 import net.minecraftforge.fml.event.lifecycle.FMLCommonSetupEvent;
 import net.minecraftforge.fml.javafmlmod.FMLJavaModLoadingContext;
+import net.minecraftforge.registries.DeferredRegister;
 import net.minecraftforge.registries.ForgeRegistries;
 import org.slf4j.Logger;
 
@@ -30,8 +33,7 @@ public class HorseHotel {
     // Directly reference a slf4j logger
     public static final Logger LOGGER = LogUtils.getLogger();
     // Create a Deferred Register to hold Items which will all be registered under the "examplemod" namespace
-    public static final Item.Properties DEFAULT_ITEM_PROPS = new Item.Properties().
-            tab(ModItemGroup.HORSEHOTEL_GROUP);
+    public static final Item.Properties DEFAULT_ITEM_PROPS = new Item.Properties();
 
     public HorseHotel(FMLJavaModLoadingContext context) {
         IEventBus modEventBus = context.getModEventBus();
@@ -43,6 +45,11 @@ public class HorseHotel {
         BLOCKS.register(modEventBus);
         // Register the Deferred Register to the mod event bus so items get registered
         ITEMS.register(modEventBus);
+
+        // The creative tab is registered separately (Item.Properties no longer carries a tab in 1.20.1).
+        DeferredRegister<CreativeModeTab> TABS = DeferredRegister.create(Registries.CREATIVE_MODE_TAB, MODID);
+        TABS.register("horsehotel", () -> ModItemGroup.HORSEHOTEL_GROUP);
+        TABS.register(modEventBus);
 
         TilesInit.TILES.register(modEventBus);
 

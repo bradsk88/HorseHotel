@@ -39,11 +39,11 @@ public class EntityForgeEvents {
 
         for (String uuid : horses.getAllKeys()) {
             CompoundTag horseData = horses.getCompound(uuid);
-            Horse holder = EntityType.HORSE.create(sp.level);
+            Horse holder = EntityType.HORSE.create(sp.level());
             holder.deserializeNBT(horseData);
             BlockPos pos = holder.getOnPos();
             if (sp.blockPosition().distSqr(pos) > 200) {
-                Entity entity = sp.getLevel().getEntity(holder.getUUID());
+                Entity entity = sp.serverLevel().getEntity(holder.getUUID());
                 if (entity == null) {
                     continue;
                 }
@@ -53,7 +53,7 @@ public class EntityForgeEvents {
     }
 
     private static void updateRegisteredHorse(LivingEntity entity) {
-        Level level = entity.getLevel();
+        Level level = entity.level();
         if (!(level instanceof ServerLevel sl)) {
             return;
         }

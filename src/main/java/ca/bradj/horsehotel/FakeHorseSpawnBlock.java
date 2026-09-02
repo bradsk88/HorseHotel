@@ -8,13 +8,12 @@ import net.minecraft.world.item.Items;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.BaseEntityBlock;
 import net.minecraft.world.level.block.Blocks;
+import net.minecraft.world.level.block.state.BlockBehaviour;
 import net.minecraft.world.level.block.EntityBlock;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.entity.BlockEntityTicker;
 import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockState;
-import net.minecraft.world.level.material.Material;
-import net.minecraft.world.level.material.MaterialColor;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.Vec3;
 import org.apache.logging.log4j.LogManager;
@@ -29,7 +28,7 @@ public class FakeHorseSpawnBlock extends BaseEntityBlock implements EntityBlock 
     public static final String ID = "fake_horse_spawn_block";
 
     public FakeHorseSpawnBlock() {
-        super(Properties.of(Material.GLASS, MaterialColor.TERRACOTTA_BROWN).strength(1.0F, 10.0F).noOcclusion());
+        super(BlockBehaviour.Properties.of().strength(1.0F, 10.0F).noOcclusion());
     }
 
     @Override
@@ -41,10 +40,10 @@ public class FakeHorseSpawnBlock extends BaseEntityBlock implements EntityBlock 
             InteractionHand p_60507_,
             BlockHitResult p_60508_
     ) {
-        if (player.getLevel().isClientSide) {
+        if (player.level().isClientSide) {
             return InteractionResult.SUCCESS;
         }
-        if (Items.STRUCTURE_BLOCK.getDefaultInstance().sameItem(player.getItemInHand(p_60507_))) {
+        if (player.getItemInHand(p_60507_).is(Items.STRUCTURE_BLOCK)) {
             HHNBT pd = HHNBT.getPersistentData(lvl.getBlockEntity(bp));
             int index = -1;
             if (pd.contains(HHNBT.Key.REGISTERED_HORSE_INDEX) && !player.isCrouching()) {

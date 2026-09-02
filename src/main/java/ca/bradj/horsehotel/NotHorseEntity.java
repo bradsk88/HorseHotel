@@ -1,5 +1,6 @@
 package ca.bradj.horsehotel;
 
+import ca.bradj.horsehotel.compat.Compat;
 import ca.bradj.horsehotel.network.HHNetwork;
 import ca.bradj.horsehotel.network.ShowPurchaseScreenMessage;
 import com.google.common.collect.ImmutableList;
@@ -184,7 +185,7 @@ public class NotHorseEntity extends LivingEntity {
         if (!(player instanceof ServerPlayer sp)) {
             return InteractionResult.SUCCESS;
         }
-        if (Items.STRUCTURE_BLOCK.getDefaultInstance().sameItem(player.getItemInHand(p_19979_))) {
+        if (player.getItemInHand(p_19979_).is(Items.STRUCTURE_BLOCK)) {
             return updateHorseData(sp);
         }
 
@@ -203,7 +204,7 @@ public class NotHorseEntity extends LivingEntity {
     }
 
     private void openPurchaseConfirm(ServerPlayer sp) {
-        ServerLevel sl = sp.getLevel();
+        ServerLevel sl = sp.serverLevel();
         BlockPos stablePos = getOnPos();
         StableAttendant att = StableAttendant.findNearest(sl, stablePos, Config.horseEvalRadius);
         if (att == null) {
@@ -226,8 +227,8 @@ public class NotHorseEntity extends LivingEntity {
         HHNBT hbt = HHNBT.getPersistentData(this);
         LOGGER.debug("Data is: {}", hbt);
         BlockState p46599 = BlocksInit.FAKE_HORSE_SPAWN_BLOCK.get().defaultBlockState();
-        sp.getLevel().setBlockAndUpdate(getOnPos(), p46599);
-        BlockEntity ent = sp.getLevel().getBlockEntity(getOnPos());
+        sp.level().setBlockAndUpdate(getOnPos(), p46599);
+        BlockEntity ent = sp.level().getBlockEntity(getOnPos());
         if (ent instanceof FakeHorseSpawnBlock.Entity e) {
             e.settingUp = true;
             HHNBT ebt = HHNBT.getPersistentData(e);
@@ -263,7 +264,7 @@ public class NotHorseEntity extends LivingEntity {
 
         LOGGER.debug("Summoning horse: {}", realHorse);
 
-        @Nullable Horse spawned = respawnRealHorse(realHorse, getOnPos(), sp, sp.getLevel());
+        @Nullable Horse spawned = respawnRealHorse(realHorse, getOnPos(), sp, sp.serverLevel());
 
         if (spawned != null) {
             sp.startRiding(spawned);
@@ -370,8 +371,8 @@ public class NotHorseEntity extends LivingEntity {
     private void handleHorseAbuse(ServerPlayer sp) {
         sp.sendSystemMessage(Component.literal("DON'T DO THAT!")); // TODO: Translate
         sp.addEffect(new MobEffectInstance(MobEffects.BLINDNESS, 300));
-        sp.hurt(DamageSource.ANVIL, 1f);
-        sp.getLevel().playSound(null, getOnPos(), SoundEvents.ANVIL_HIT, SoundSource.BLOCKS, 1, 1);
+        sp.hurt(Compat.anvilDamageSource(sp.level()), 1f);
+        sp.level().playSound(null, getOnPos(), SoundEvents.ANVIL_HIT, SoundSource.BLOCKS, 1, 1);
         for (int i = 0; i < 15; i++) { // There's probably a better way to do a "big push", but oh well.
             sp.push(this);
         }
@@ -396,7 +397,7 @@ public class NotHorseEntity extends LivingEntity {
 
         // Only the server decides visibility. If a client forced the flag locally it would
         // stick, and the server would never correct it: synched data is only pushed on change.
-        if (!(level instanceof ServerLevel sl)) {
+        if (!(level() instanceof ServerLevel sl)) {
             return;
         }
 

@@ -250,8 +250,8 @@ public class NotHorseModel extends AgeableListModel<NotHorseEntity> {
             float p_102783_
     ) {
         super.prepareMobModel(p_102780_, p_102781_, p_102782_, p_102783_);
-        float f = Mth.rotlerp(p_102780_.yBodyRotO, p_102780_.yBodyRot, p_102783_);
-        float f1 = Mth.rotlerp(p_102780_.yHeadRotO, p_102780_.yHeadRot, p_102783_);
+        float f = Mth.rotLerp(p_102780_.yBodyRotO, p_102780_.yBodyRot, p_102783_);
+        float f1 = Mth.rotLerp(p_102780_.yHeadRotO, p_102780_.yHeadRot, p_102783_);
         float f2 = Mth.lerp(p_102783_, p_102780_.xRotO, p_102780_.getXRot());
         float f3 = f1 - f;
         float f4 = f2 * ((float) Math.PI / 180F);
